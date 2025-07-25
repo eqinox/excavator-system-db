@@ -3,7 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configValidationSchema } from './config.schema';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './auth/user.entity';
+import { Category } from './categories/category.entity';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -24,12 +26,12 @@ import { AuthModule } from './auth/auth.module';
           username: configService.get('DB_USERNAME'),
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_DATABASE'),
-          entities: [User],
+          entities: [User, Category],
         };
       },
     }),
     AuthModule,
-    // ProductsModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}
