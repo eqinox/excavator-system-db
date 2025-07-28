@@ -23,4 +23,13 @@ export class UpdateCategoryDto {
   @IsArray()
   @IsUUID('4', { each: true })
   equipment?: string[];
+
+  @ApiProperty({
+    example: 'categories/excavator-category.jpg',
+    description: 'The image path for the category',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  image?: string;
 }

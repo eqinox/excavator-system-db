@@ -43,7 +43,7 @@ async function bootstrap() {
     .setDescription('The E-commerce API documentation')
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
-    // .addTag('products', 'Product management endpoints')
+    .addTag('categories', 'Category management endpoints')
     .addBearerAuth(
       {
         type: 'http',

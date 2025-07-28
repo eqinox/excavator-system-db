@@ -31,6 +31,14 @@ export class Category {
   @Column('text', { array: true, default: [] })
   equipment: string[];
 
+  @ApiProperty({
+    example: 'categories/excavator-category.jpg',
+    description: 'The image path for the category',
+    required: false,
+  })
+  @Column({ nullable: true })
+  image?: string;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 

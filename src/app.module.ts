@@ -12,6 +12,7 @@ import { CategoriesModule } from './categories/categories.module';
     ConfigModule.forRoot({
       envFilePath: ['.env', `.env.${process.env.NODE_ENV}`],
       validationSchema: configValidationSchema,
+      isGlobal: true, // Make ConfigModule global
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

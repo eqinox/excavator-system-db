@@ -9,6 +9,11 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,7 +22,9 @@ import {
   ApiParam,
   ApiBody,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -29,20 +36,28 @@ import { AdminGuard } from 'src/auth/admin.guard';
 
 @ApiTags('categories')
 @Controller('categories')
+@UseGuards(AuthGuard())
+@ApiResponse({
+  status: 401,
+  description: 'Unauthorized',
+})
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
-  @UseGuards(AuthGuard(), AdminGuard)
+  @UseGuards(AdminGuard)
+  @UseInterceptors(FileInterceptor('image'))
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Create a new category',
     description:
-      'Creates a new category with the provided name and optional equipment array. Only admins can create categories.',
+      'Creates a new category with the provided name, optional equipment array, and optional image. Only admins can create categories.',
   })
   @ApiBody({
     type: CreateCategoryDto,
     description: 'Category creation data',
+    required: true,
   })
   @ApiResponse({
     status: 201,
@@ -64,8 +79,22 @@ export class CategoriesController {
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
     @GetUser() currentUser: User,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    imageFile?: Express.Multer.File,
   ): Promise<CategoryResponseDto> {
-    return await this.categoriesService.create(createCategoryDto, currentUser);
+    return await this.categoriesService.create(
+      createCategoryDto,
+      currentUser,
+      imageFile,
+    );
   }
 
   @Get()
@@ -106,12 +135,14 @@ export class CategoriesController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard(), AdminGuard)
+  @UseGuards(AdminGuard)
+  @UseInterceptors(FileInterceptor('image'))
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Update a category',
     description:
-      'Updates an existing category with the provided data. Only admins can update categories.',
+      'Updates an existing category with the provided data and optional image. Only admins can update categories.',
   })
   @ApiParam({
     name: 'id',
@@ -121,6 +152,7 @@ export class CategoriesController {
   @ApiBody({
     type: UpdateCategoryDto,
     description: 'Category update data',
+    required: true,
   })
   @ApiResponse({
     status: 200,
@@ -147,16 +179,27 @@ export class CategoriesController {
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
     @GetUser() currentUser: User,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    imageFile?: Express.Multer.File,
   ): Promise<CategoryResponseDto> {
     return await this.categoriesService.update(
       id,
       updateCategoryDto,
       currentUser,
+      imageFile,
     );
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard(), AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({

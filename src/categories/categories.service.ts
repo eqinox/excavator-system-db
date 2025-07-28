@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
-  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,7 +10,7 @@ import { Category } from './category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { User } from '../auth/user.entity';
-import { Role } from '../auth/roles.enum';
+import { FileUploadService } from '../common/services/file-upload.service';
 
 @Injectable()
 export class CategoriesService {
@@ -19,13 +18,13 @@ export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private categoriesRepository: Repository<Category>,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private fileUploadService: FileUploadService,
   ) {}
 
   async create(
     createCategoryDto: CreateCategoryDto,
     currentUser: User,
+    imageFile?: Express.Multer.File,
   ): Promise<Category> {
     // Check if category with the same name already exists
     const existingCategory = await this.categoriesRepository.findOne({
@@ -39,10 +38,20 @@ export class CategoriesService {
       throw new ConflictException('Category with this name already exists');
     }
 
+    // Upload image if provided
+    let imagePath: string | undefined;
+    if (imageFile) {
+      imagePath = await this.fileUploadService.uploadImage(
+        imageFile,
+        'categories',
+      );
+    }
+
     // Set the created_by field to the current user's ID
     const categoryData = {
       ...createCategoryDto,
       created_by: currentUser.id,
+      image: imagePath,
     };
 
     const category = this.categoriesRepository.create(categoryData);
@@ -74,6 +83,7 @@ export class CategoriesService {
     id: string,
     updateCategoryDto: UpdateCategoryDto,
     currentUser: User,
+    imageFile?: Express.Multer.File,
   ): Promise<Category> {
     const category = await this.findOne(id);
 
@@ -91,19 +101,39 @@ export class CategoriesService {
       }
     }
 
+    // Handle image upload if provided
+    if (imageFile) {
+      // Delete old image if exists
+      if (category.image) {
+        await this.fileUploadService.deleteImage(category.image);
+      }
+      // Upload new image
+      const imagePath = await this.fileUploadService.uploadImage(
+        imageFile,
+        'categories',
+      );
+      updateCategoryDto.image = imagePath;
+    }
+
     Object.assign(category, updateCategoryDto);
     const updatedCategory = await this.categoriesRepository.save(category);
     this.logger.log(
-      `Category ${updatedCategory.id} updated by user: ${currentUser.email} with id: ${currentUser.id}`,
+      `Category ${updatedCategory.name} with id ${updatedCategory.id} updated by user: ${currentUser.email} with id: ${currentUser.id}`,
     );
     return updatedCategory;
   }
 
   async remove(id: string, currentUser: User): Promise<void> {
     const category = await this.findOne(id);
+
+    // Delete associated image if exists
+    if (category.image) {
+      await this.fileUploadService.deleteImage(category.image);
+    }
+
     await this.categoriesRepository.remove(category);
     this.logger.log(
-      `Category ${id} deleted by user: ${currentUser.email} with id: ${currentUser.id}`,
+      `Category ${category.name} with id ${id} deleted by user: ${currentUser.email} with id: ${currentUser.id}`,
     );
   }
 }
