@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from './roles.enum';
+import { Equipment } from '../equipment/equipment.entity';
 
 @Entity()
 export class User {
@@ -49,4 +50,7 @@ export class User {
     default: Role.USER,
   })
   role: Role;
+
+  @OneToMany(() => Equipment, (equipment) => equipment.ownerUser)
+  ownedEquipment: Equipment[];
 }

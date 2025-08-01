@@ -10,7 +10,24 @@ import { ConfigService } from '@nestjs/config';
 export class FileValidationPipe implements PipeTransform {
   constructor(private configService: ConfigService) {}
 
-  transform(file: Express.Multer.File, metadata: ArgumentMetadata) {
+  transform(
+    file: Express.Multer.File | Express.Multer.File[],
+    metadata: ArgumentMetadata,
+  ) {
+    // Handle single file
+    if (file && !Array.isArray(file)) {
+      return this.validateSingleFile(file);
+    }
+
+    // Handle array of files
+    if (Array.isArray(file)) {
+      return file.map((f) => this.validateSingleFile(f));
+    }
+
+    return file; // File is optional
+  }
+
+  private validateSingleFile(file: Express.Multer.File): Express.Multer.File {
     if (!file) {
       return file; // File is optional
     }
@@ -40,7 +57,6 @@ export class FileValidationPipe implements PipeTransform {
       .map((type) => type.trim().toLowerCase())
       .filter((type) => type.length > 0);
 
-    console.log(allowedMimeTypes);
     if (!allowedMimeTypes.includes(file.mimetype)) {
       // Extract extensions for error message
       const extensions = allowedMimeTypes.map((type) => {

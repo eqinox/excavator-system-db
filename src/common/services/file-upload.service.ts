@@ -51,13 +51,14 @@ export class FileUploadService {
   async uploadImage(
     file: Express.Multer.File,
     folder: string,
+    subfolder?: string,
   ): Promise<string> {
     try {
       switch (this.storageConfig.type) {
         case StorageType.LOCAL:
-          return await this.uploadToLocal(file, folder);
+          return await this.uploadToLocal(file, folder, subfolder);
         case StorageType.CLOUD:
-          return await this.uploadToCloud(file, folder);
+          return await this.uploadToCloud(file, folder, subfolder);
         default:
           throw new Error(
             `Unsupported storage type: ${this.storageConfig.type}`,
@@ -72,10 +73,16 @@ export class FileUploadService {
   private async uploadToLocal(
     file: Express.Multer.File,
     folder: string,
+    subfolder?: string,
   ): Promise<string> {
     const localPath = this.storageConfig.localPath || 'public/images';
     const uploadsDir = path.join(process.cwd(), localPath);
     const categoryDir = path.join(uploadsDir, folder);
+
+    // Create subfolder path if provided
+    const finalDir = subfolder
+      ? path.join(categoryDir, subfolder)
+      : categoryDir;
 
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
@@ -85,30 +92,34 @@ export class FileUploadService {
       fs.mkdirSync(categoryDir, { recursive: true });
     }
 
+    if (subfolder && !fs.existsSync(finalDir)) {
+      fs.mkdirSync(finalDir, { recursive: true });
+    }
     const fileExtension = path.extname(file.originalname);
     const fileName = `${uuidv4()}${fileExtension}`;
-    const filePath = path.join(categoryDir, fileName);
+    const filePath = path.join(finalDir, fileName);
 
     fs.writeFileSync(filePath, file.buffer);
 
-    const relativePath = `${folder}/${fileName}`;
+    // Create relative path with subfolder if provided
+    const relativePath = subfolder
+      ? `${folder}/${subfolder}/${fileName}`
+      : `${folder}/${fileName}`;
 
-    this.logger.log(
-      `File uploaded successfully to local storage: ${relativePath}`,
-    );
     return relativePath;
   }
 
   private async uploadToCloud(
     file: Express.Multer.File,
     folder: string,
+    subfolder?: string,
   ): Promise<string> {
     // This is a placeholder for cloud storage implementation
     // You would implement AWS S3, Google Cloud Storage, or Azure Blob Storage here
     this.logger.warn(
       'Cloud storage not implemented yet. Using local fallback.',
     );
-    return await this.uploadToLocal(file, folder);
+    return await this.uploadToLocal(file, folder, subfolder);
   }
 
   async deleteImage(imagePath: string): Promise<void> {

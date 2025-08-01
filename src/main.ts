@@ -55,11 +55,12 @@ async function bootstrap() {
 
   // Configure Swagger
   const config = new DocumentBuilder()
-    .setTitle('E-commerce API')
-    .setDescription('The E-commerce API documentation')
+    .setTitle('Excavator API')
+    .setDescription('The Excavator API documentation')
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
     .addTag('categories', 'Category management endpoints')
+    .addTag('equipment', 'Equipment management endpoints')
     .addBearerAuth(
       {
         type: 'http',
