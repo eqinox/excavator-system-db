@@ -37,14 +37,22 @@ export class UpdateEquipmentDto {
   category_id?: string;
 
   @ApiProperty({
-    example: ['equipment/excavator-1.jpg', 'equipment/excavator-2.jpg'],
-    description: 'Array of image paths for the equipment',
+    example: [
+      {
+        original: 'equipment/vasko2/uuid-1.jpg',
+        small: 'equipment/vasko2/uuid-1_small.jpg',
+      },
+      {
+        original: 'equipment/vasko2/uuid-2.jpg',
+        small: 'equipment/vasko2/uuid-2_small.jpg',
+      },
+    ],
+    description: 'Array of image objects with original and small versions',
     required: false,
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  images?: string[];
+  images?: Array<{ original: string; small: string }>;
 
   @ApiProperty({
     example: 150.0,

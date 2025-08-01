@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import * as sharp from 'sharp';
 
 export enum StorageType {
   LOCAL = 'local',
@@ -52,7 +53,7 @@ export class FileUploadService {
     file: Express.Multer.File,
     folder: string,
     subfolder?: string,
-  ): Promise<string> {
+  ): Promise<{ original: string; small: string }> {
     try {
       switch (this.storageConfig.type) {
         case StorageType.LOCAL:
@@ -74,7 +75,7 @@ export class FileUploadService {
     file: Express.Multer.File,
     folder: string,
     subfolder?: string,
-  ): Promise<string> {
+  ): Promise<{ original: string; small: string }> {
     const localPath = this.storageConfig.localPath || 'public/images';
     const uploadsDir = path.join(process.cwd(), localPath);
     const categoryDir = path.join(uploadsDir, folder);
@@ -95,25 +96,59 @@ export class FileUploadService {
     if (subfolder && !fs.existsSync(finalDir)) {
       fs.mkdirSync(finalDir, { recursive: true });
     }
+
     const fileExtension = path.extname(file.originalname);
-    const fileName = `${uuidv4()}${fileExtension}`;
-    const filePath = path.join(finalDir, fileName);
+    const baseFileName = uuidv4();
+    const originalFileName = `${baseFileName}${fileExtension}`;
+    const smallFileName = `${baseFileName}_small${fileExtension}`;
 
-    fs.writeFileSync(filePath, file.buffer);
+    const originalFilePath = path.join(finalDir, originalFileName);
+    const smallFilePath = path.join(finalDir, smallFileName);
 
-    // Create relative path with subfolder if provided
-    const relativePath = subfolder
-      ? `${folder}/${subfolder}/${fileName}`
-      : `${folder}/${fileName}`;
+    // Save original file
+    fs.writeFileSync(originalFilePath, file.buffer);
 
-    return relativePath;
+    // Create small version (thumbnail)
+    try {
+      await sharp(file.buffer)
+        .resize(300, 300, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 80 })
+        .toFile(smallFilePath);
+
+      this.logger.log(`Created thumbnail: ${smallFileName}`);
+    } catch (error) {
+      this.logger.error(`Failed to create thumbnail: ${error.message}`);
+      // If thumbnail creation fails, copy original as small
+      fs.copyFileSync(originalFilePath, smallFilePath);
+    }
+
+    // Create relative paths with subfolder if provided
+    const originalRelativePath = subfolder
+      ? `${folder}/${subfolder}/${originalFileName}`
+      : `${folder}/${originalFileName}`;
+
+    const smallRelativePath = subfolder
+      ? `${folder}/${subfolder}/${smallFileName}`
+      : `${folder}/${smallFileName}`;
+
+    this.logger.log(
+      `Files uploaded successfully to local storage: ${originalRelativePath} (original), ${smallRelativePath} (small)`,
+    );
+
+    return {
+      original: originalRelativePath,
+      small: smallRelativePath,
+    };
   }
 
   private async uploadToCloud(
     file: Express.Multer.File,
     folder: string,
     subfolder?: string,
-  ): Promise<string> {
+  ): Promise<{ original: string; small: string }> {
     // This is a placeholder for cloud storage implementation
     // You would implement AWS S3, Google Cloud Storage, or Azure Blob Storage here
     this.logger.warn(
@@ -138,6 +173,39 @@ export class FileUploadService {
       }
     } catch (error) {
       this.logger.error(`File deletion failed: ${error.message}`);
+    }
+  }
+
+  async deleteImagePair(imagePath: string): Promise<void> {
+    try {
+      // Extract base path and extension
+      const pathParts = imagePath.split('/');
+      const fileName = pathParts[pathParts.length - 1];
+      const basePath = pathParts.slice(0, -1).join('/');
+
+      // Determine if this is original or small version
+      const isOriginal = !fileName.includes('_small');
+      const isSmall = fileName.includes('_small');
+
+      if (isOriginal) {
+        // Delete original and small
+        const smallPath = imagePath.replace(
+          fileName,
+          fileName.replace('.', '_small.'),
+        );
+        await this.deleteImage(imagePath);
+        await this.deleteImage(smallPath);
+      } else if (isSmall) {
+        // Delete small and original
+        const originalPath = imagePath.replace('_small.', '.');
+        await this.deleteImage(imagePath);
+        await this.deleteImage(originalPath);
+      } else {
+        // Fallback to single file deletion
+        await this.deleteImage(imagePath);
+      }
+    } catch (error) {
+      this.logger.error(`Image pair deletion failed: ${error.message}`);
     }
   }
 

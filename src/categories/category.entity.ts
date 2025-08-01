@@ -34,12 +34,15 @@ export class Category {
   equipment: string[];
 
   @ApiProperty({
-    example: 'categories/excavator-category.jpg',
-    description: 'The image path for the category',
+    example: {
+      original: 'categories/excavator-category.jpg',
+      small: 'categories/excavator-category_small.jpg',
+    },
+    description: 'Image object with original and small versions',
     required: false,
   })
-  @Column({ nullable: true })
-  image?: string;
+  @Column('json', { nullable: true })
+  image?: { original: string; small: string };
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

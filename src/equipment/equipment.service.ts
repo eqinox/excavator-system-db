@@ -44,15 +44,15 @@ export class EquipmentService {
       );
     }
     // Upload images if provided
-    let imagePaths: string[] = [];
+    let imagePaths: Array<{ original: string; small: string }> = [];
     if (imageFiles && imageFiles.length > 0) {
       for (const imageFile of imageFiles) {
-        const imagePath = await this.fileUploadService.uploadImage(
+        const imageResult = await this.fileUploadService.uploadImage(
           imageFile,
           'equipment',
           currentUser.email.split('@')[0], // Use email prefix as subfolder
         );
-        imagePaths.push(imagePath);
+        imagePaths.push(imageResult);
       }
     }
 
@@ -135,15 +135,15 @@ export class EquipmentService {
     }
 
     // Upload images if provided
-    let imagePaths: string[] = [];
+    let imagePaths: Array<{ original: string; small: string }> = [];
     if (imageFiles && imageFiles.length > 0) {
       for (const imageFile of imageFiles) {
-        const imagePath = await this.fileUploadService.uploadImage(
+        const imageResult = await this.fileUploadService.uploadImage(
           imageFile,
           'equipment',
           currentUser.email.split('@')[0], // Use email prefix as subfolder
         );
-        imagePaths.push(imagePath);
+        imagePaths.push(imageResult);
       }
     }
 
@@ -190,16 +190,22 @@ export class EquipmentService {
       const oldImages = equipment.images || [];
       const newImages = updateEquipmentDto.images;
 
-      for (const oldImagePath of oldImages) {
-        if (!newImages.includes(oldImagePath)) {
+      for (const oldImageObj of oldImages) {
+        const isImageInNewArray = newImages.some(
+          (newImg) =>
+            newImg.original === oldImageObj.original &&
+            newImg.small === oldImageObj.small,
+        );
+
+        if (!isImageInNewArray) {
           try {
-            await this.fileUploadService.deleteImage(oldImagePath);
+            await this.fileUploadService.deleteImagePair(oldImageObj.original);
             this.logger.log(
-              `Old image ${oldImagePath} deleted for equipment ${equipment.name} (${id})`,
+              `Old image pair deleted for equipment ${equipment.name} (${id}): ${oldImageObj.original}`,
             );
           } catch (error) {
             this.logger.warn(
-              `Failed to delete old image ${oldImagePath} for equipment ${id}: ${error.message}`,
+              `Failed to delete old image pair for equipment ${id}: ${error.message}`,
             );
           }
         }
@@ -233,12 +239,12 @@ export class EquipmentService {
 
     // Delete associated images if they exist
     if (equipment.images && equipment.images.length > 0) {
-      for (const imagePath of equipment.images) {
+      for (const imageObj of equipment.images) {
         try {
-          await this.fileUploadService.deleteImage(imagePath);
+          await this.fileUploadService.deleteImagePair(imageObj.original);
         } catch (error) {
           this.logger.warn(
-            `Failed to delete image ${imagePath} for equipment ${id}: ${error.message}`,
+            `Failed to delete image pair for equipment ${id}: ${error.message}`,
           );
         }
       }

@@ -39,9 +39,9 @@ export class CategoriesService {
     }
 
     // Upload image if provided
-    let imagePath: string | undefined;
+    let imageObj: { original: string; small: string } | undefined;
     if (imageFile) {
-      imagePath = await this.fileUploadService.uploadImage(
+      imageObj = await this.fileUploadService.uploadImage(
         imageFile,
         'categories',
       );
@@ -51,7 +51,7 @@ export class CategoriesService {
     const categoryData = {
       ...createCategoryDto,
       created_by: currentUser.id,
-      image: imagePath,
+      image: imageObj,
     };
 
     const category = this.categoriesRepository.create(categoryData);
@@ -105,14 +105,14 @@ export class CategoriesService {
     if (imageFile) {
       // Delete old image if exists
       if (category.image) {
-        await this.fileUploadService.deleteImage(category.image);
+        await this.fileUploadService.deleteImagePair(category.image.original);
       }
       // Upload new image
-      const imagePath = await this.fileUploadService.uploadImage(
+      const imageObj = await this.fileUploadService.uploadImage(
         imageFile,
         'categories',
       );
-      updateCategoryDto.image = imagePath;
+      updateCategoryDto.image = imageObj;
     }
 
     Object.assign(category, updateCategoryDto);
@@ -128,7 +128,7 @@ export class CategoriesService {
 
     // Delete associated image if exists
     if (category.image) {
-      await this.fileUploadService.deleteImage(category.image);
+      await this.fileUploadService.deleteImagePair(category.image.original);
     }
 
     await this.categoriesRepository.remove(category);

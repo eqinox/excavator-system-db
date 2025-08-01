@@ -25,11 +25,13 @@ export class UpdateCategoryDto {
   equipment?: string[];
 
   @ApiProperty({
-    example: 'categories/excavator-category.jpg',
-    description: 'The image path for the category',
+    example: {
+      original: 'categories/excavator-category.jpg',
+      small: 'categories/excavator-category_small.jpg',
+    },
+    description: 'Image object with original and small versions',
     required: false,
   })
   @IsOptional()
-  @IsString()
-  image?: string;
+  image?: { original: string; small: string };
 }
