@@ -3,12 +3,28 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { TransformInterceptor } from './transform.interceptor';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger();
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
+
+  // Debug: Log the static file serving path
+  const staticPath = join(process.cwd(), 'public');
+  logger.log(`Static files path: ${staticPath}`);
+  logger.log(`Current directory: ${process.cwd()}`);
+  logger.log(`__dirname: ${__dirname}`);
+
+  // Add a simple test endpoint
+  app.use('/test', (req, res) => {
+    res.json({ message: 'Server is running!' });
+  });
+
+  // Serve static files from the public directory without prefix
+  app.useStaticAssets(staticPath);
 
   // Enable CORS with more permissive settings for development
   app.enableCors({

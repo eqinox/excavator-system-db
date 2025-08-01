@@ -12,7 +12,7 @@ export const configValidationSchema = Joi.object({
   DB_PASSWORD: Joi.string().required(),
   DB_DATABASE: Joi.string().required(),
   JWT_SECRET: Joi.string().required(),
-  UPLOAD_MAX_SIZE: Joi.number().default(5 * 1024 * 1024), // 5MB
+  UPLOAD_MAX_SIZE: Joi.number().default(10 * 1024 * 1024), // 10MB
   UPLOAD_ALLOWED_TYPES: Joi.string().default('jpg,jpeg,png,gif'),
   // Storage configuration
   STORAGE_TYPE: Joi.string().valid('local', 'cloud').default('local'),

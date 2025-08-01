@@ -11,9 +11,6 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -33,6 +30,7 @@ import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/auth/admin.guard';
+import { FileValidationPipe } from '../common/pipes/file-validation.pipe';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -79,15 +77,7 @@ export class CategoriesController {
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
     @GetUser() currentUser: User,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
-        ],
-        fileIsRequired: false,
-      }),
-    )
+    @UploadedFile(FileValidationPipe)
     imageFile?: Express.Multer.File,
   ): Promise<CategoryResponseDto> {
     return await this.categoriesService.create(
@@ -179,15 +169,7 @@ export class CategoriesController {
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
     @GetUser() currentUser: User,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
-        ],
-        fileIsRequired: false,
-      }),
-    )
+    @UploadedFile(FileValidationPipe)
     imageFile?: Express.Multer.File,
   ): Promise<CategoryResponseDto> {
     return await this.categoriesService.update(
