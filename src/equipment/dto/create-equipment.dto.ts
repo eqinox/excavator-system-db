@@ -6,6 +6,8 @@ import {
   IsUUID,
   IsNumber,
   IsBoolean,
+  IsArray,
+  ArrayMinSize,
 } from 'class-validator';
 
 export class CreateEquipmentDto {
@@ -63,4 +65,17 @@ export class CreateEquipmentDto {
   @IsOptional()
   @IsUUID('4')
   owner?: string;
+
+  @ApiProperty({
+    type: 'array',
+    items: {
+      type: 'string',
+      format: 'binary',
+    },
+    description: 'Required array of equipment images (minimum 1 image)',
+    required: true,
+  })
+  @IsArray()
+  @ArrayMinSize(1, { message: 'At least one image is required' })
+  images: Express.Multer.File[];
 }

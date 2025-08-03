@@ -46,7 +46,7 @@ export class EquipmentController {
   @ApiOperation({
     summary: 'Create a new equipment',
     description:
-      'Creates a new equipment with the provided data and optional images. Equipment will be automatically added to the specified category.',
+      'Creates a new equipment with the provided data and required images. Equipment will be automatically added to the specified category.',
   })
   @ApiBody({
     type: CreateEquipmentDto,
@@ -60,7 +60,7 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad request - validation error',
+    description: 'Bad request - validation error or missing required images',
   })
   @ApiResponse({
     status: 404,
@@ -70,7 +70,7 @@ export class EquipmentController {
     @Body() createEquipmentDto: CreateEquipmentDto,
     @GetUser() currentUser: User,
     @UploadedFiles(FileValidationPipe)
-    imageFiles?: Express.Multer.File[],
+    imageFiles: Express.Multer.File[],
   ): Promise<EquipmentResponseDto> {
     return await this.equipmentService.create(
       createEquipmentDto,

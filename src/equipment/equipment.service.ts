@@ -3,6 +3,7 @@ import {
   NotFoundException,
   Logger,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,7 +29,7 @@ export class EquipmentService {
   async create(
     createEquipmentDto: CreateEquipmentDto,
     currentUser: User,
-    imageFiles?: Express.Multer.File[],
+    imageFiles: Express.Multer.File[],
   ): Promise<Equipment> {
     // Check if category exists
     const category = await this.categoryRepository.findOne({
@@ -43,17 +44,21 @@ export class EquipmentService {
         `Category with ID ${createEquipmentDto.category_id} not found`,
       );
     }
-    // Upload images if provided
+    // Upload required images
     let imagePaths: Array<{ original: string; small: string }> = [];
-    if (imageFiles && imageFiles.length > 0) {
-      for (const imageFile of imageFiles) {
-        const imageResult = await this.fileUploadService.uploadImage(
-          imageFile,
-          'equipment',
-          currentUser.email.split('@')[0], // Use email prefix as subfolder
-        );
-        imagePaths.push(imageResult);
-      }
+    if (!imageFiles || imageFiles.length === 0) {
+      throw new BadRequestException(
+        'At least one image is required for equipment creation',
+      );
+    }
+
+    for (const imageFile of imageFiles) {
+      const imageResult = await this.fileUploadService.uploadImage(
+        imageFile,
+        'equipment',
+        currentUser.email.split('@')[0], // Use email prefix as subfolder
+      );
+      imagePaths.push(imageResult);
     }
 
     // Set the owner field to the current user's ID
