@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { configValidationSchema } from './config.schema';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './auth/user.entity';
-import { Category } from './categories/category.entity';
-import { Equipment } from './equipment/equipment.entity';
 import { AuthModule } from './auth/auth.module';
+import { User } from './auth/user.entity';
 import { CategoriesModule } from './categories/categories.module';
+import { Category } from './categories/category.entity';
+import { configValidationSchema } from './config.schema';
+import { Equipment } from './equipment/equipment.entity';
 import { EquipmentModule } from './equipment/equipment.module';
 
 @Module({

@@ -1,10 +1,11 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { TransformInterceptor } from './transform.interceptor';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
+import { AppModule } from './app.module';
+import { ResponseInterceptor } from './client/response.interceptor';
+import { TransformInterceptor } from './transform.interceptor';
 
 async function bootstrap() {
   const logger = new Logger();
@@ -52,6 +53,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Configure Swagger
   const config = new DocumentBuilder()
