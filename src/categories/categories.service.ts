@@ -1,16 +1,16 @@
 import {
-  Injectable,
-  NotFoundException,
   ConflictException,
+  Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User } from '../auth/user.entity';
+import { FileUploadService } from '../common/services/file-upload.service';
 import { Category } from './category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { User } from '../auth/user.entity';
-import { FileUploadService } from '../common/services/file-upload.service';
 
 @Injectable()
 export class CategoriesService {
@@ -57,7 +57,7 @@ export class CategoriesService {
     const category = this.categoriesRepository.create(categoryData);
     const savedCategory = await this.categoriesRepository.save(category);
     this.logger.log(
-      `Category ${savedCategory.id} created by user: ${currentUser.email} with id: ${currentUser.id}`,
+      `Category ${savedCategory.name} created by user: ${currentUser.email}`,
     );
     return savedCategory;
   }
@@ -118,7 +118,7 @@ export class CategoriesService {
     Object.assign(category, updateCategoryDto);
     const updatedCategory = await this.categoriesRepository.save(category);
     this.logger.log(
-      `Category ${updatedCategory.name} with id ${updatedCategory.id} updated by user: ${currentUser.email} with id: ${currentUser.id}`,
+      `Category ${updatedCategory.name} updated by user: ${currentUser.email}`,
     );
     return updatedCategory;
   }
@@ -133,7 +133,7 @@ export class CategoriesService {
 
     await this.categoriesRepository.remove(category);
     this.logger.log(
-      `Category ${category.name} with id ${id} deleted by user: ${currentUser.email} with id: ${currentUser.id}`,
+      `Category ${category.name} deleted by user: ${currentUser.email}`,
     );
   }
 }

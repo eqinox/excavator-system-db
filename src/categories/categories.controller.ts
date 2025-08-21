@@ -1,36 +1,34 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  HttpCode,
-  HttpStatus,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
-  UploadedFile,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
-  ApiBearerAuth,
-  ApiConsumes,
-} from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategoryResponseDto } from './dto/category-response.dto';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AdminGuard } from 'src/auth/admin.guard';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
-import { AuthGuard } from '@nestjs/passport';
-import { AdminGuard } from 'src/auth/admin.guard';
 import { FileValidationPipe } from '../common/pipes/file-validation.pipe';
+import { CategoriesService } from './categories.service';
+import { CategoryResponseDto } from './dto/category-response.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -183,7 +181,6 @@ export class CategoriesController {
   @Delete(':id')
   @UseGuards(AdminGuard)
   @ApiBearerAuth()
-  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a category',
     description:
@@ -195,8 +192,17 @@ export class CategoriesController {
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
-    status: 204,
+    status: 200,
     description: 'Category deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Категорията е изтрита успешно',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -209,7 +215,8 @@ export class CategoriesController {
   async remove(
     @Param('id') id: string,
     @GetUser() currentUser: User,
-  ): Promise<void> {
-    return await this.categoriesService.remove(id, currentUser);
+  ): Promise<{ message: string }> {
+    await this.categoriesService.remove(id, currentUser);
+    return { message: 'Категорията е изтрита успешно' };
   }
 }
