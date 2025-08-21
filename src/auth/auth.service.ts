@@ -5,16 +5,16 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
 import { JwtPayload } from './dto/jwt-payload.interface';
-import { RegisterDto } from './dto/register.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
-import { LoginResponseDto } from './dto/login-response.dto';
+import { RegisterDto } from './dto/register.dto';
+import { User } from './user.entity';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +24,9 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async createUser(authCredentialsDto: RegisterDto): Promise<RegisterResponseDto> {
+  async createUser(
+    authCredentialsDto: RegisterDto,
+  ): Promise<RegisterResponseDto> {
     const { email, password, username } = authCredentialsDto;
 
     const salt = await bcrypt.genSalt();
@@ -39,7 +41,7 @@ export class AuthService {
     try {
       const savedUser = await this.usersRepository.save(user);
       this.logger.log(`Created user with email: ${user.email}`);
-      
+
       // Remove password from the returned user object
       const { password: _, ...userWithoutPassword } = savedUser;
       return userWithoutPassword;
@@ -72,11 +74,43 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          role: user.role
-        }
+          role: user.role,
+        },
       };
     } else {
       throw new UnauthorizedException('Please check your login credentials');
+    }
+  }
+
+  // Add this method to the AuthService class
+  async validateToken(token: string): Promise<{ valid: boolean; user?: any }> {
+    try {
+      // Verify the JWT token
+      const payload = this.jwtService.verify(token);
+
+      // Find the user in the database
+      const user = await this.usersRepository.findOne({
+        where: { email: payload.email },
+      });
+
+      if (!user) {
+        this.logger.warn(
+          `Token validation failed: User not found for email: ${payload.email}`,
+        );
+        return { valid: false };
+      }
+
+      this.logger.log(`Token validated successfully for user: ${user.email}`);
+
+      // Return user info without password
+      const { password: _, ...userWithoutPassword } = user;
+      return {
+        valid: true,
+        user: userWithoutPassword,
+      };
+    } catch (error) {
+      this.logger.warn(`Token validation failed: ${error.message}`);
+      return { valid: false };
     }
   }
 }
