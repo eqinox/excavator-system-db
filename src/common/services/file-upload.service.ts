@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import * as sharp from 'sharp';
+import { v4 as uuidv4 } from 'uuid';
 
 export enum StorageType {
   LOCAL = 'local',
@@ -125,14 +125,14 @@ export class FileUploadService {
       fs.copyFileSync(originalFilePath, smallFilePath);
     }
 
-    // Create relative paths with subfolder if provided
+    // Create relative paths with subfolder if provided, including /images/ prefix for frontend access
     const originalRelativePath = subfolder
-      ? `${folder}/${subfolder}/${originalFileName}`
-      : `${folder}/${originalFileName}`;
+      ? `images/${folder}/${subfolder}/${originalFileName}`
+      : `images/${folder}/${originalFileName}`;
 
     const smallRelativePath = subfolder
-      ? `${folder}/${subfolder}/${smallFileName}`
-      : `${folder}/${smallFileName}`;
+      ? `images/${folder}/${subfolder}/${smallFileName}`
+      : `images/${folder}/${smallFileName}`;
 
     this.logger.log(
       `Files uploaded successfully to local storage: ${originalRelativePath} (original), ${smallRelativePath} (small)`,
@@ -211,7 +211,13 @@ export class FileUploadService {
 
   private async deleteFromLocal(imagePath: string): Promise<void> {
     const localPath = this.storageConfig.localPath || 'public/images';
-    const fullPath = path.join(process.cwd(), localPath, imagePath);
+
+    // Remove the 'images/' prefix from the path for file system operations
+    const fileSystemPath = imagePath.startsWith('images/')
+      ? imagePath.substring(7) // Remove 'images/' prefix
+      : imagePath;
+
+    const fullPath = path.join(process.cwd(), localPath, fileSystemPath);
     if (fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
       this.logger.log(
@@ -228,12 +234,13 @@ export class FileUploadService {
   getImageUrl(imagePath: string): string {
     switch (this.storageConfig.type) {
       case StorageType.LOCAL:
-        return `/images/${imagePath}`;
+        // Since imagePath now includes 'images/' prefix, just add leading slash
+        return `/${imagePath}`;
       case StorageType.CLOUD:
         // Return cloud storage URL
         return `${this.configService.get<string>('CLOUD_BASE_URL')}/${imagePath}`;
       default:
-        return `/images/${imagePath}`;
+        return `/${imagePath}`;
     }
   }
 }

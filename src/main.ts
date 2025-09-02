@@ -2,6 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './client/response.interceptor';
@@ -12,6 +13,10 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
+
+  // Increase body size limits to allow large base64 images in requests
+  app.use(json({ limit: '20mb' }));
+  app.use(urlencoded({ extended: true, limit: '20mb' }));
 
   // Debug: Log the static file serving path
   const staticPath = join(process.cwd(), 'public');
@@ -63,6 +68,7 @@ async function bootstrap() {
     .addTag('auth', 'Authentication endpoints')
     .addTag('categories', 'Category management endpoints')
     .addTag('equipment', 'Equipment management endpoints')
+    .addTag('images', 'Image serving endpoints')
     .addBearerAuth(
       {
         type: 'http',

@@ -8,6 +8,7 @@ import { Category } from './categories/category.entity';
 import { configValidationSchema } from './config.schema';
 import { Equipment } from './equipment/equipment.entity';
 import { EquipmentModule } from './equipment/equipment.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { EquipmentModule } from './equipment/equipment.module';
     AuthModule,
     CategoriesModule,
     EquipmentModule,
+    ImagesModule,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -24,7 +25,6 @@ export class CategoriesService {
   async create(
     createCategoryDto: CreateCategoryDto,
     currentUser: User,
-    imageFile?: Express.Multer.File,
   ): Promise<Category> {
     // Check if category with the same name already exists
     const existingCategory = await this.categoriesRepository.findOne({
@@ -38,23 +38,26 @@ export class CategoriesService {
       throw new ConflictException('Category with this name already exists');
     }
 
-    // Upload image if provided
+    // Handle base64 image if provided
     let imageObj: { original: string; small: string } | undefined;
-    if (imageFile) {
-      imageObj = await this.fileUploadService.uploadImage(
-        imageFile,
-        'categories',
-      );
+    if (createCategoryDto.image) {
+      imageObj = await this.handleBase64Image(createCategoryDto.image);
     }
 
     // Set the created_by field to the current user's ID
     const categoryData = {
-      ...createCategoryDto,
+      name: createCategoryDto.name,
+      equipment: createCategoryDto.equipment,
       created_by: currentUser.id,
-      image: imageObj,
     };
 
     const category = this.categoriesRepository.create(categoryData);
+
+    // Set the processed image paths if image was uploaded
+    if (imageObj) {
+      category.image = imageObj;
+    }
+
     const savedCategory = await this.categoriesRepository.save(category);
     this.logger.log(
       `Category ${savedCategory.name} created by user: ${currentUser.email}`,
@@ -83,7 +86,6 @@ export class CategoriesService {
     id: string,
     updateCategoryDto: UpdateCategoryDto,
     currentUser: User,
-    imageFile?: Express.Multer.File,
   ): Promise<Category> {
     const category = await this.findOne(id);
 
@@ -101,21 +103,29 @@ export class CategoriesService {
       }
     }
 
-    // Handle image upload if provided
-    if (imageFile) {
+    // Handle base64 image if provided
+    let imageObj: { original: string; small: string } | undefined;
+    if (
+      updateCategoryDto.image &&
+      typeof updateCategoryDto.image === 'string'
+    ) {
       // Delete old image if exists
       if (category.image) {
         await this.fileUploadService.deleteImagePair(category.image.original);
       }
       // Upload new image
-      const imageObj = await this.fileUploadService.uploadImage(
-        imageFile,
-        'categories',
-      );
-      updateCategoryDto.image = imageObj;
+      imageObj = await this.handleBase64Image(updateCategoryDto.image);
     }
 
+    // Remove the base64 image data from the data to be saved
+    delete updateCategoryDto.image;
+
     Object.assign(category, updateCategoryDto);
+
+    // Assign the new image if it was uploaded
+    if (imageObj) {
+      category.image = imageObj;
+    }
     const updatedCategory = await this.categoriesRepository.save(category);
     this.logger.log(
       `Category ${updatedCategory.name} updated by user: ${currentUser.email}`,
@@ -135,5 +145,48 @@ export class CategoriesService {
     this.logger.log(
       `Category ${category.name} deleted by user: ${currentUser.email}`,
     );
+  }
+
+  private async handleBase64Image(
+    base64Data: string,
+  ): Promise<{ original: string; small: string }> {
+    try {
+      // Remove data URL prefix if present
+      const base64String = base64Data.replace(
+        /^data:image\/[a-z]+;base64,/,
+        '',
+      );
+
+      // Convert base64 to buffer
+      const buffer = Buffer.from(base64String, 'base64');
+
+      // Create a mock file object for the upload service
+      const file: Express.Multer.File = {
+        buffer,
+        originalname: 'image.jpg',
+        mimetype: 'image/jpeg',
+        size: buffer.length,
+        fieldname: 'image',
+        encoding: '7bit',
+        destination: '',
+        filename: '',
+        path: '',
+        stream: undefined as any,
+      };
+
+      // Validate file size (using the same logic as FileValidationPipe)
+      const maxSize = 10 * 1024 * 1024; // 10 MB
+      if (file.size > maxSize) {
+        throw new BadRequestException(
+          `File size exceeds maximum allowed size of ${maxSize} bytes`,
+        );
+      }
+
+      // Upload using the existing file upload service
+      return await this.fileUploadService.uploadImage(file, 'categories');
+    } catch (error) {
+      this.logger.error(`Failed to handle base64 image: ${error.message}`);
+      throw new BadRequestException('Invalid base64 image data');
+    }
   }
 }

@@ -6,16 +6,12 @@ import {
   Param,
   Patch,
   Post,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -24,7 +20,6 @@ import {
 import { AdminGuard } from 'src/auth/admin.guard';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
-import { FileValidationPipe } from '../common/pipes/file-validation.pipe';
 import { CategoriesService } from './categories.service';
 import { CategoryResponseDto } from './dto/category-response.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -42,17 +37,15 @@ export class CategoriesController {
 
   @Post()
   @UseGuards(AdminGuard)
-  @UseInterceptors(FileInterceptor('image'))
   @ApiBearerAuth()
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Create a new category',
     description:
-      'Creates a new category with the provided name, optional equipment array, and optional image. Only admins can create categories.',
+      'Creates a new category with the provided name, optional equipment array, and optional base64 image. Only admins can create categories.',
   })
   @ApiBody({
     type: CreateCategoryDto,
-    description: 'Category creation data',
+    description: 'Category creation data with optional base64 image',
     required: true,
   })
   @ApiResponse({
@@ -75,14 +68,8 @@ export class CategoriesController {
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
     @GetUser() currentUser: User,
-    @UploadedFile(FileValidationPipe)
-    imageFile?: Express.Multer.File,
   ): Promise<CategoryResponseDto> {
-    return await this.categoriesService.create(
-      createCategoryDto,
-      currentUser,
-      imageFile,
-    );
+    return await this.categoriesService.create(createCategoryDto, currentUser);
   }
 
   @Get()
@@ -124,13 +111,11 @@ export class CategoriesController {
 
   @Patch(':id')
   @UseGuards(AdminGuard)
-  @UseInterceptors(FileInterceptor('image'))
   @ApiBearerAuth()
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Update a category',
     description:
-      'Updates an existing category with the provided data and optional image. Only admins can update categories.',
+      'Updates an existing category with the provided data and optional base64 image. Only admins can update categories.',
   })
   @ApiParam({
     name: 'id',
@@ -139,7 +124,7 @@ export class CategoriesController {
   })
   @ApiBody({
     type: UpdateCategoryDto,
-    description: 'Category update data',
+    description: 'Category update data with optional base64 image',
     required: true,
   })
   @ApiResponse({
@@ -167,14 +152,11 @@ export class CategoriesController {
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
     @GetUser() currentUser: User,
-    @UploadedFile(FileValidationPipe)
-    imageFile?: Express.Multer.File,
   ): Promise<CategoryResponseDto> {
     return await this.categoriesService.update(
       id,
       updateCategoryDto,
       currentUser,
-      imageFile,
     );
   }
 
