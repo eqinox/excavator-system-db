@@ -1,7 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Role } from './roles.enum';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Equipment } from '../equipment/equipment.entity';
+import { Role } from './roles.enum';
 
 @Entity()
 export class User {
@@ -50,6 +50,9 @@ export class User {
     default: Role.USER,
   })
   role: Role;
+
+  @Column({ type: 'varchar', nullable: true })
+  refresh_token: string | null;
 
   @OneToMany(() => Equipment, (equipment) => equipment.ownerUser)
   ownedEquipment: Equipment[];

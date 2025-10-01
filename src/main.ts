@@ -2,6 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
@@ -17,6 +18,9 @@ async function bootstrap() {
   // Increase body size limits to allow large base64 images in requests
   app.use(json({ limit: '20mb' }));
   app.use(urlencoded({ extended: true, limit: '20mb' }));
+
+  // Enable cookie parser for refresh tokens
+  app.use(cookieParser());
 
   // Debug: Log the static file serving path
   const staticPath = join(process.cwd(), 'public');

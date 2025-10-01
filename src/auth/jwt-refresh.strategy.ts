@@ -8,19 +8,26 @@ import { JwtPayload } from './dto/jwt-payload.interface';
 import { User } from './user.entity';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
     private configService: ConfigService,
   ) {
     super({
-      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request) => {
+          return request?.cookies?.refreshToken;
+        },
+      ]),
     });
   }
 
   async validate(payload: JwtPayload): Promise<User> {
-    if (payload.type !== 'access') {
+    if (payload.type !== 'refresh') {
       throw new UnauthorizedException('Invalid token type');
     }
 
@@ -31,8 +38,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
-    if (!user) {
-      throw new UnauthorizedException();
+    if (!user || !user.refresh_token) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     return user;

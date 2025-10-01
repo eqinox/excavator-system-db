@@ -1,3 +1,5 @@
 export interface JwtPayload {
   email: string;
+  sub: string; // user id
+  type: 'access' | 'refresh';
 }
