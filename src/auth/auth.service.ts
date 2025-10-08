@@ -15,6 +15,7 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { RegisterDto } from './dto/register.dto';
+import { Role } from './roles.enum';
 import { User } from './user.entity';
 
 @Injectable()
@@ -128,7 +129,10 @@ export class AuthService {
   async refreshTokens(
     user: User,
     res: Response,
-  ): Promise<{ access_token: string }> {
+  ): Promise<{
+    access_token: string;
+    user: { id: string; email: string; role: Role };
+  }> {
     const tokens = await this.generateTokens(user);
     await this.updateRefreshToken(user.id, tokens.refresh_token);
 
@@ -140,7 +144,14 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return { access_token: tokens.access_token };
+    return {
+      access_token: tokens.access_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
   async logout(userId: string, res: Response): Promise<void> {
