@@ -144,8 +144,17 @@ export class AuthService {
   }
 
   async logout(userId: string, res: Response): Promise<void> {
+    // Invalidate refresh token in database
     await this.updateRefreshToken(userId, null);
-    res.clearCookie('refreshToken');
+
+    // Clear the HTTP-only cookie
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    this.logger.log(`User with ID: ${userId} has been logged out`);
   }
 
   // Add this method to the AuthService class

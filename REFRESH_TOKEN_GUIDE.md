@@ -55,7 +55,7 @@ JWT_REFRESH_SECRET=your-super-secure-jwt-refresh-secret-key-here
 
 ### 2. Refresh Token
 
-**POST** `/auth/refresh`
+**GET** `/auth/refresh`
 
 **Request:** No body required (uses HTTP-only cookie)
 
@@ -73,7 +73,7 @@ JWT_REFRESH_SECRET=your-super-secure-jwt-refresh-secret-key-here
 
 ### 3. Logout
 
-**POST** `/auth/logout`
+**GET** `/auth/logout`
 
 **Headers:**
 
@@ -89,9 +89,10 @@ Authorization: Bearer <access_token>
 }
 ```
 
-**Cookies Cleared:**
+**Session Destroyed:**
 
-- `refreshToken`: Removed from browser
+- `refresh_token`: Invalidated in database and removed from browser
+- User session completely terminated
 
 ## Frontend Implementation
 
@@ -122,21 +123,21 @@ class AuthService {
 
   async refreshToken() {
     const response = await fetch(`${this.baseUrl}/auth/refresh`, {
-      method: 'POST',
+      method: 'GET',
       credentials: 'include', // Important for cookies
     });
 
     if (response.ok) {
       const data = await response.json();
-      this.accessToken = data.accessToken;
-      return data.accessToken;
+      this.accessToken = data.access_token;
+      return data.access_token;
     }
     throw new Error('Token refresh failed');
   }
 
   async logout() {
     const response = await fetch(`${this.baseUrl}/auth/logout`, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
       },
@@ -212,21 +213,21 @@ export const useAuth = () => {
 
   const refreshToken = async () => {
     const response = await fetch('/auth/refresh', {
-      method: 'POST',
+      method: 'GET',
       credentials: 'include',
     });
 
     if (response.ok) {
       const data = await response.json();
-      setAccessToken(data.accessToken);
-      return data.accessToken;
+      setAccessToken(data.access_token);
+      return data.access_token;
     }
     throw new Error('Token refresh failed');
   };
 
   const logout = async () => {
     await fetch('/auth/logout', {
-      method: 'POST',
+      method: 'GET',
       headers: { Authorization: `Bearer ${accessToken}` },
       credentials: 'include',
     });
@@ -283,12 +284,12 @@ curl -X GET http://localhost:3000/auth/validate \
   -b cookies.txt
 
 # Refresh token (uses cookie)
-curl -X POST http://localhost:3000/auth/refresh \
+curl -X GET http://localhost:3000/auth/refresh \
   -b cookies.txt \
   -c cookies.txt
 
-# Logout
-curl -X POST http://localhost:3000/auth/logout \
+# Logout (destroys session)
+curl -X GET http://localhost:3000/auth/logout \
   -H "Authorization: Bearer <access_token>" \
   -b cookies.txt
 ```

@@ -20,7 +20,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request) => {
-          return request?.cookies?.refreshToken;
+          return request?.cookies?.refresh_token;
         },
       ]),
     });

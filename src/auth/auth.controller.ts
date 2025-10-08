@@ -11,6 +11,7 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenResponseDto } from './dto/refresh-token-response.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { GetUser } from './get-user.decorator';
@@ -102,7 +103,7 @@ export class AuthController {
     };
   }
 
-  @Post('refresh')
+  @Get('refresh')
   @UseGuards(AuthGuard('jwt-refresh'))
   @ApiOperation({
     summary: 'Refresh access token',
@@ -112,15 +113,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Access token refreshed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-      },
-    },
+    type: RefreshTokenResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -129,17 +122,17 @@ export class AuthController {
   async refresh(
     @GetUser() user: User,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ access_token: string }> {
+  ): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshTokens(user, res);
   }
 
-  @Post('logout')
+  @Get('logout')
   @UseGuards(AuthGuard())
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Logout user',
     description:
-      'Invalidates the refresh token and clears the HTTP-only cookie',
+      'Invalidates the refresh token and clears the HTTP-only cookie to destroy the session.',
   })
   @ApiResponse({
     status: 200,
@@ -153,7 +146,7 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized',
+    description: 'Unauthorized - Invalid or expired access token',
   })
   async logout(
     @GetUser() user: User,
