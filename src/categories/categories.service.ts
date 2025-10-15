@@ -103,7 +103,7 @@ export class CategoriesService {
       }
     }
 
-    // Handle base64 image if provided
+    // Handle base64 image if provided (PATCH behavior: only update if new image is provided)
     let imageObj: { original: string; small: string } | undefined;
     if (
       updateCategoryDto.image &&
@@ -122,10 +122,13 @@ export class CategoriesService {
 
     Object.assign(category, updateCategoryDto);
 
-    // Assign the new image if it was uploaded
+    // PATCH behavior: only update image if a new one was provided
+    // If no new image is provided, keep the existing image
     if (imageObj) {
       category.image = imageObj;
     }
+    // If no new image is provided, category.image remains unchanged (existing image preserved)
+
     const updatedCategory = await this.categoriesRepository.save(category);
     this.logger.log(
       `Category ${updatedCategory.name} updated by user: ${currentUser.email}`,
