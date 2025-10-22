@@ -6,7 +6,6 @@ import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
-import { ResponseInterceptor } from './client/response.interceptor';
 import { TransformInterceptor } from './transform.interceptor';
 
 async function bootstrap() {
@@ -59,10 +58,11 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
       whitelist: true,
       forbidNonWhitelisted: true,
+      disableErrorMessages: false,
     }),
   );
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  // app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Configure Swagger
   const config = new DocumentBuilder()

@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-  IsNumber,
-  IsBoolean,
-  IsArray,
   ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateEquipmentDto {
@@ -31,6 +31,7 @@ export class CreateEquipmentDto {
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'The ID of the category this equipment belongs to',
   })
+  @IsNotEmpty()
   @IsUUID('4')
   category_id: string;
 
@@ -59,23 +60,15 @@ export class CreateEquipmentDto {
   location_id: string;
 
   @ApiProperty({
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'The ID of the user who owns this equipment',
-  })
-  @IsOptional()
-  @IsUUID('4')
-  owner?: string;
-
-  @ApiProperty({
-    type: 'array',
-    items: {
-      type: 'string',
-      format: 'binary',
-    },
-    description: 'Required array of equipment images (minimum 1 image)',
+    example: [
+      'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
+      'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
+    ],
+    description: 'Array of base64 encoded image data (minimum 1 image)',
     required: true,
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one image is required' })
-  images: Express.Multer.File[];
+  @IsString({ each: true })
+  images: string[];
 }

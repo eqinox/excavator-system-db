@@ -15,7 +15,7 @@ describe('AuthService Integration', () => {
       imports: [
         ConfigModule.forRoot({
           envFilePath: ['.env.stage.test'],
-          isGlobal: true
+          isGlobal: true,
         }),
         TypeOrmModule.forRoot({
           type: 'postgres',
@@ -32,7 +32,7 @@ describe('AuthService Integration', () => {
         JwtModule.register({
           secret: process.env.JWT_SECRET,
           signOptions: { expiresIn: '1h' },
-        })
+        }),
       ],
       providers: [AuthService],
     }).compile();
@@ -48,7 +48,7 @@ describe('AuthService Integration', () => {
     createdUser = await service.createUser({
       email: 'test@test.com',
       password: 'Test123!',
-      username: 'testuser'
+      username: 'testuser',
     });
 
     expect(createdUser).toBeDefined();
@@ -59,7 +59,7 @@ describe('AuthService Integration', () => {
   it('should sign in with the created user', async () => {
     const signInResult = await service.signIn({
       email: 'test@test.com',
-      password: 'Test123!'
+      password: 'Test123!',
     });
 
     expect(signInResult).toBeDefined();

@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
-  IsOptional,
   IsArray,
-  IsUUID,
-  IsNumber,
   IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
 } from 'class-validator';
 
 export class UpdateEquipmentDto {
@@ -38,21 +38,16 @@ export class UpdateEquipmentDto {
 
   @ApiProperty({
     example: [
-      {
-        original: 'equipment/vasko2/uuid-1.jpg',
-        small: 'equipment/vasko2/uuid-1_small.jpg',
-      },
-      {
-        original: 'equipment/vasko2/uuid-2.jpg',
-        small: 'equipment/vasko2/uuid-2_small.jpg',
-      },
+      'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
+      'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
     ],
-    description: 'Array of image objects with original and small versions',
+    description: 'Array of base64 encoded image data (optional)',
     required: false,
   })
   @IsOptional()
   @IsArray()
-  images?: Array<{ original: string; small: string }>;
+  @IsString({ each: true })
+  images?: string[];
 
   @ApiProperty({
     example: 150.0,

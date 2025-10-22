@@ -1,33 +1,28 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   UseGuards,
-  UseInterceptors,
-  UploadedFiles,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
   ApiBearerAuth,
-  ApiConsumes,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { EquipmentService } from './equipment.service';
-import { CreateEquipmentDto } from './dto/create-equipment.dto';
-import { UpdateEquipmentDto } from './dto/update-equipment.dto';
-import { EquipmentResponseDto } from './dto/equipment-response.dto';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
-import { AuthGuard } from '@nestjs/passport';
-import { FileValidationPipe } from '../common/pipes/file-validation.pipe';
+import { CreateEquipmentDto } from './dto/create-equipment.dto';
+import { EquipmentResponseDto } from './dto/equipment-response.dto';
+import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { EquipmentService } from './equipment.service';
 
 @ApiTags('equipment')
 @Controller('equipment')
@@ -40,17 +35,15 @@ export class EquipmentController {
   constructor(private readonly equipmentService: EquipmentService) {}
 
   @Post()
-  @UseInterceptors(FilesInterceptor('images', 10))
   @ApiBearerAuth()
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Create a new equipment',
     description:
-      'Creates a new equipment with the provided data and required images. Equipment will be automatically added to the specified category.',
+      'Creates a new equipment with the provided data and required base64 images. Equipment will be automatically added to the specified category.',
   })
   @ApiBody({
     type: CreateEquipmentDto,
-    description: 'Equipment creation data',
+    description: 'Equipment creation data with base64 images',
     required: true,
   })
   @ApiResponse({
@@ -69,14 +62,8 @@ export class EquipmentController {
   async create(
     @Body() createEquipmentDto: CreateEquipmentDto,
     @GetUser() currentUser: User,
-    @UploadedFiles(FileValidationPipe)
-    imageFiles: Express.Multer.File[],
   ): Promise<EquipmentResponseDto> {
-    return await this.equipmentService.create(
-      createEquipmentDto,
-      currentUser,
-      imageFiles,
-    );
+    return await this.equipmentService.create(createEquipmentDto, currentUser);
   }
 
   @Get()
@@ -176,13 +163,11 @@ export class EquipmentController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FilesInterceptor('images', 10))
   @ApiBearerAuth()
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Update equipment',
     description:
-      'Updates an existing equipment with the provided data and optional images. Equipment can be moved between categories. Only the equipment owner or admin users can update equipment.',
+      'Updates an existing equipment with the provided data and optional base64 images. Equipment can be moved between categories. Only the equipment owner or admin users can update equipment.',
   })
   @ApiParam({
     name: 'id',
@@ -191,7 +176,7 @@ export class EquipmentController {
   })
   @ApiBody({
     type: UpdateEquipmentDto,
-    description: 'Equipment update data',
+    description: 'Equipment update data with optional base64 images',
     required: true,
   })
   @ApiResponse({
@@ -216,14 +201,11 @@ export class EquipmentController {
     @Param('id') id: string,
     @Body() updateEquipmentDto: UpdateEquipmentDto,
     @GetUser() currentUser: User,
-    @UploadedFiles(FileValidationPipe)
-    imageFiles?: Express.Multer.File[],
   ): Promise<EquipmentResponseDto> {
     return await this.equipmentService.update(
       id,
       updateEquipmentDto,
       currentUser,
-      imageFiles,
     );
   }
 
@@ -242,6 +224,14 @@ export class EquipmentController {
   @ApiResponse({
     status: 200,
     description: 'Equipment deleted successfully',
+    schema: {
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Съоръжението е изтрито успешно',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -255,7 +245,7 @@ export class EquipmentController {
   async remove(
     @Param('id') id: string,
     @GetUser() currentUser: User,
-  ): Promise<void> {
+  ): Promise<{ message: string }> {
     return await this.equipmentService.remove(id, currentUser);
   }
 }

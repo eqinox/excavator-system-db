@@ -1,19 +1,19 @@
 import {
-  Injectable,
-  NotFoundException,
-  Logger,
-  ForbiddenException,
   BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Equipment } from './equipment.entity';
-import { CreateEquipmentDto } from './dto/create-equipment.dto';
-import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { Role } from '../auth/roles.enum';
 import { User } from '../auth/user.entity';
 import { Category } from '../categories/category.entity';
 import { FileUploadService } from '../common/services/file-upload.service';
-import { Role } from '../auth/roles.enum';
+import { CreateEquipmentDto } from './dto/create-equipment.dto';
+import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { Equipment } from './equipment.entity';
 
 @Injectable()
 export class EquipmentService {
@@ -29,7 +29,6 @@ export class EquipmentService {
   async create(
     createEquipmentDto: CreateEquipmentDto,
     currentUser: User,
-    imageFiles: Express.Multer.File[],
   ): Promise<Equipment> {
     // Check if category exists
     const category = await this.categoryRepository.findOne({
@@ -44,18 +43,18 @@ export class EquipmentService {
         `Category with ID ${createEquipmentDto.category_id} not found`,
       );
     }
-    // Upload required images
-    let imagePaths: Array<{ original: string; small: string }> = [];
-    if (!imageFiles || imageFiles.length === 0) {
+
+    // Handle base64 images if provided
+    const imagePaths: Array<{ original: string; small: string }> = [];
+    if (!createEquipmentDto.images || createEquipmentDto.images.length === 0) {
       throw new BadRequestException(
         'At least one image is required for equipment creation',
       );
     }
 
-    for (const imageFile of imageFiles) {
-      const imageResult = await this.fileUploadService.uploadImage(
-        imageFile,
-        'equipment',
+    for (const base64Image of createEquipmentDto.images) {
+      const imageResult = await this.handleBase64Image(
+        base64Image,
         currentUser.email.split('@')[0], // Use email prefix as subfolder
       );
       imagePaths.push(imageResult);
@@ -69,7 +68,11 @@ export class EquipmentService {
       available: createEquipmentDto.available ?? true,
     };
 
+    // Remove the base64 images from the data to be saved
+    delete (equipmentData as any).images;
+
     const equipment = this.equipmentRepository.create(equipmentData);
+    equipment.images = imagePaths; // Set the processed image paths
     const savedEquipment = await this.equipmentRepository.save(equipment);
 
     // Update the category's equipment array
@@ -122,7 +125,6 @@ export class EquipmentService {
     id: string,
     updateEquipmentDto: UpdateEquipmentDto,
     currentUser: User,
-    imageFiles?: Express.Multer.File[],
   ): Promise<Equipment> {
     const equipment = await this.findOne(id);
 
@@ -139,13 +141,29 @@ export class EquipmentService {
       );
     }
 
-    // Upload images if provided
-    let imagePaths: Array<{ original: string; small: string }> = [];
-    if (imageFiles && imageFiles.length > 0) {
-      for (const imageFile of imageFiles) {
-        const imageResult = await this.fileUploadService.uploadImage(
-          imageFile,
-          'equipment',
+    // Handle base64 images if provided (PATCH behavior: only update if new images are provided)
+    const imagePaths: Array<{ original: string; small: string }> = [];
+    if (updateEquipmentDto.images && updateEquipmentDto.images.length > 0) {
+      // Delete old images if they exist
+      if (equipment.images && equipment.images.length > 0) {
+        for (const oldImageObj of equipment.images) {
+          try {
+            await this.fileUploadService.deleteImagePair(oldImageObj.original);
+            this.logger.log(
+              `Old image pair deleted for equipment ${equipment.name} (${id}): ${oldImageObj.original}`,
+            );
+          } catch (error) {
+            this.logger.warn(
+              `Failed to delete old image pair for equipment ${id}: ${error.message}`,
+            );
+          }
+        }
+      }
+
+      // Upload new images
+      for (const base64Image of updateEquipmentDto.images) {
+        const imageResult = await this.handleBase64Image(
+          base64Image,
           currentUser.email.split('@')[0], // Use email prefix as subfolder
         );
         imagePaths.push(imageResult);
@@ -181,43 +199,17 @@ export class EquipmentService {
       }
     }
 
+    // Remove the base64 images from the data to be saved
+    delete (updateEquipmentDto as any).images;
+
     // Update equipment data
     Object.assign(equipment, updateEquipmentDto);
 
-    // Add new images to images array if uploaded
+    // PATCH behavior: only update images if new ones were provided
     if (imagePaths.length > 0) {
-      equipment.images = [...imagePaths, ...(equipment.images || [])];
+      equipment.images = imagePaths;
     }
-
-    // If images are being explicitly set (replacing all images), delete old ones
-    if (updateEquipmentDto.images !== undefined) {
-      // Delete old images that are not in the new images array
-      const oldImages = equipment.images || [];
-      const newImages = updateEquipmentDto.images;
-
-      for (const oldImageObj of oldImages) {
-        const isImageInNewArray = newImages.some(
-          (newImg) =>
-            newImg.original === oldImageObj.original &&
-            newImg.small === oldImageObj.small,
-        );
-
-        if (!isImageInNewArray) {
-          try {
-            await this.fileUploadService.deleteImagePair(oldImageObj.original);
-            this.logger.log(
-              `Old image pair deleted for equipment ${equipment.name} (${id}): ${oldImageObj.original}`,
-            );
-          } catch (error) {
-            this.logger.warn(
-              `Failed to delete old image pair for equipment ${id}: ${error.message}`,
-            );
-          }
-        }
-      }
-
-      equipment.images = newImages;
-    }
+    // If no new images are provided, equipment.images remains unchanged (existing images preserved)
 
     const updatedEquipment = await this.equipmentRepository.save(equipment);
     this.logger.log(
@@ -226,7 +218,7 @@ export class EquipmentService {
     return updatedEquipment;
   }
 
-  async remove(id: string, currentUser: User): Promise<void> {
+  async remove(id: string, currentUser: User): Promise<{ message: string }> {
     const equipment = await this.findOne(id);
 
     // Check if user is authorized to delete this equipment
@@ -268,5 +260,54 @@ export class EquipmentService {
     this.logger.log(
       `Equipment ${equipment.name} with ID ${id} deleted by ${isAdmin ? 'admin' : 'owner'} user: ${currentUser.email}`,
     );
+    return { message: 'Съоръжението е изтрито успешно' };
+  }
+
+  private async handleBase64Image(
+    base64Data: string,
+    subfolder?: string,
+  ): Promise<{ original: string; small: string }> {
+    try {
+      // Remove data URL prefix if present
+      const base64String = base64Data.replace(
+        /^data:image\/[a-z]+;base64,/,
+        '',
+      );
+
+      // Convert base64 to buffer
+      const buffer = Buffer.from(base64String, 'base64');
+
+      // Create a mock file object for the upload service
+      const file: Express.Multer.File = {
+        buffer,
+        originalname: 'image.jpg',
+        mimetype: 'image/jpeg',
+        size: buffer.length,
+        fieldname: 'image',
+        encoding: '7bit',
+        destination: '',
+        filename: '',
+        path: '',
+        stream: undefined as any,
+      };
+
+      // Validate file size (using the same logic as FileValidationPipe)
+      const maxSize = 10 * 1024 * 1024; // 10 MB
+      if (file.size > maxSize) {
+        throw new BadRequestException(
+          `File size exceeds maximum allowed size of ${maxSize} bytes`,
+        );
+      }
+
+      // Upload using the existing file upload service
+      return await this.fileUploadService.uploadImage(
+        file,
+        'equipment',
+        subfolder,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to handle base64 image: ${error.message}`);
+      throw new BadRequestException('Invalid base64 image data');
+    }
   }
 }
