@@ -44,11 +44,10 @@ export class CategoriesService {
       imageObj = await this.handleBase64Image(createCategoryDto.image);
     }
 
-    // Set the created_by field to the current user's ID
+    // Set the creatorId field to the current user's ID
     const categoryData = {
       name: createCategoryDto.name,
-      equipment: createCategoryDto.equipment,
-      created_by: currentUser.id,
+      creatorId: currentUser.id,
     };
 
     const category = this.categoriesRepository.create(categoryData);
@@ -66,12 +65,15 @@ export class CategoriesService {
   }
 
   async findAll(): Promise<Category[]> {
-    return await this.categoriesRepository.find();
+    return await this.categoriesRepository.find({
+      relations: ['subCategories', 'creator'],
+    });
   }
 
   async findOne(id: string): Promise<Category> {
     const category = await this.categoriesRepository.findOne({
       where: { id },
+      relations: ['subCategories', 'creator'],
     });
 
     if (!category) {
@@ -144,6 +146,7 @@ export class CategoriesService {
       await this.fileUploadService.deleteImagePair(category.image.original);
     }
 
+    // SubCategories will be cascade deleted due to onDelete: 'CASCADE' in the relation
     await this.categoriesRepository.remove(category);
     this.logger.log(
       `Category ${category.name} deleted by user: ${currentUser.email}`,

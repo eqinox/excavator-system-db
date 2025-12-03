@@ -29,18 +29,18 @@ export class CreateEquipmentDto {
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'The ID of the category this equipment belongs to',
+    description: 'The ID of the subCategory this equipment belongs to',
   })
   @IsNotEmpty()
   @IsUUID('4')
-  category_id: string;
+  subCategoryId: string;
 
   @ApiProperty({
     example: 150.0,
     description: 'The price per day for renting this equipment',
   })
   @IsNumber()
-  price_per_day: number;
+  pricePerDay: number;
 
   @ApiProperty({
     example: true,
@@ -57,7 +57,7 @@ export class CreateEquipmentDto {
   })
   @IsString()
   @IsNotEmpty()
-  location_id: string;
+  locationId: string;
 
   @ApiProperty({
     example: [

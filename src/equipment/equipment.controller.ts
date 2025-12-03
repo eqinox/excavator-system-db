@@ -39,7 +39,7 @@ export class EquipmentController {
   @ApiOperation({
     summary: 'Create a new equipment',
     description:
-      'Creates a new equipment with the provided data and required base64 images. Equipment will be automatically added to the specified category.',
+      'Creates a new equipment with the provided data and required base64 images. Equipment will be associated with the specified subCategory.',
   })
   @ApiBody({
     type: CreateEquipmentDto,
@@ -57,7 +57,7 @@ export class EquipmentController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Category not found',
+    description: 'SubCategory not found',
   })
   async create(
     @Body() createEquipmentDto: CreateEquipmentDto,
@@ -80,25 +80,25 @@ export class EquipmentController {
     return await this.equipmentService.findAll();
   }
 
-  @Get('category/:categoryId')
+  @Get('sub-category/:subCategoryId')
   @ApiOperation({
-    summary: 'Get equipment by category',
-    description: 'Retrieves all equipment belonging to a specific category',
+    summary: 'Get equipment by subCategory',
+    description: 'Retrieves all equipment belonging to a specific subCategory',
   })
   @ApiParam({
-    name: 'categoryId',
-    description: 'The unique identifier of the category',
+    name: 'subCategoryId',
+    description: 'The unique identifier of the subCategory',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
     status: 200,
-    description: 'List of equipment in category retrieved successfully',
+    description: 'List of equipment in subCategory retrieved successfully',
     type: [EquipmentResponseDto],
   })
-  async findByCategory(
-    @Param('categoryId') categoryId: string,
+  async findBySubCategory(
+    @Param('subCategoryId') subCategoryId: string,
   ): Promise<EquipmentResponseDto[]> {
-    return await this.equipmentService.findByCategory(categoryId);
+    return await this.equipmentService.findBySubCategory(subCategoryId);
   }
 
   @Get('owner/:ownerId')
@@ -167,7 +167,7 @@ export class EquipmentController {
   @ApiOperation({
     summary: 'Update equipment',
     description:
-      'Updates an existing equipment with the provided data and optional base64 images. Equipment can be moved between categories. Only the equipment owner or admin users can update equipment.',
+      'Updates an existing equipment with the provided data and optional base64 images. Equipment can be moved between subCategories. Only the equipment owner or admin users can update equipment.',
   })
   @ApiParam({
     name: 'id',
@@ -214,7 +214,7 @@ export class EquipmentController {
   @ApiOperation({
     summary: 'Delete equipment',
     description:
-      'Deletes an existing equipment. Equipment will be removed from its category. Only the equipment owner or admin users can delete equipment.',
+      'Deletes an existing equipment. Only the equipment owner or admin users can delete equipment.',
   })
   @ApiParam({
     name: 'id',

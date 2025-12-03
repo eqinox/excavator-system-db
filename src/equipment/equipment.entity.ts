@@ -1,15 +1,15 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  JoinColumn,
   CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../auth/user.entity';
-import { Category } from '../categories/category.entity';
+import { SubCategory } from '../categories/sub-category.entity';
 
 @Entity()
 export class Equipment {
@@ -36,14 +36,14 @@ export class Equipment {
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'The ID of the category this equipment belongs to',
+    description: 'The ID of the subCategory this equipment belongs to',
   })
   @Column()
-  category_id: string;
+  subCategoryId: string;
 
-  @ManyToOne(() => Category, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'category_id' })
-  category: Category;
+  @ManyToOne(() => SubCategory, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'subCategoryId' })
+  subCategory: SubCategory;
 
   @ApiProperty({
     example: [
@@ -66,7 +66,7 @@ export class Equipment {
     description: 'The price per day for renting this equipment',
   })
   @Column('decimal', { precision: 10, scale: 2 })
-  price_per_day: number;
+  pricePerDay: number;
 
   @ApiProperty({
     example: true,
@@ -80,7 +80,7 @@ export class Equipment {
     description: 'The location where the equipment is available',
   })
   @Column()
-  location_id: string;
+  locationId: string;
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -94,8 +94,8 @@ export class Equipment {
   ownerUser: User;
 
   @CreateDateColumn()
-  created_at: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updatedAt: Date;
 }

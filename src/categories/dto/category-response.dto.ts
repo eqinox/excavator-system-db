@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { SubCategoryResponseDto } from './sub-category-response.dto';
 
 export class CategoryResponseDto {
   @ApiProperty({
@@ -14,15 +15,6 @@ export class CategoryResponseDto {
   name: string;
 
   @ApiProperty({
-    example: [
-      '123e4567-e89b-12d3-a456-426614174000',
-      '987fcdeb-51a2-43d1-b456-789012345678',
-    ],
-    description: 'Array of equipment IDs belonging to this category',
-  })
-  equipment: string[];
-
-  @ApiProperty({
     example: {
       original: 'categories/excavator-category.jpg',
       small: 'categories/excavator-category_small.jpg',
@@ -33,20 +25,42 @@ export class CategoryResponseDto {
   image?: { original: string; small: string };
 
   @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'The ID of the user who created this category',
+  })
+  creatorId: string;
+
+  @ApiProperty({
+    example: [
+      {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        categoryId: '123e4567-e89b-12d3-a456-426614174000',
+        type: 'Mini Excavator',
+        minRange: 0,
+        maxRange: 10,
+        image: {
+          original: 'sub-categories/mini-excavator.jpg',
+          small: 'sub-categories/mini-excavator_small.jpg',
+        },
+        creatorId: '123e4567-e89b-12d3-a456-426614174000',
+        createdAt: '2024-01-15T10:30:00.000Z',
+        updatedAt: '2024-01-15T10:30:00.000Z',
+      },
+    ],
+    description: 'Array of subCategories belonging to this category',
+    type: [SubCategoryResponseDto],
+  })
+  subCategories: SubCategoryResponseDto[];
+
+  @ApiProperty({
     example: '2024-01-15T10:30:00.000Z',
     description: 'The creation timestamp',
   })
-  created_at: Date;
+  createdAt: Date;
 
   @ApiProperty({
     example: '2024-01-15T10:30:00.000Z',
     description: 'The last update timestamp',
   })
-  updated_at: Date;
-
-  @ApiProperty({
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'The ID of the user who created this category',
-  })
-  created_by: string;
+  updatedAt: Date;
 }

@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role } from '../auth/roles.enum';
 import { User } from '../auth/user.entity';
-import { Category } from '../categories/category.entity';
+import { SubCategory } from '../categories/sub-category.entity';
 import { FileUploadService } from '../common/services/file-upload.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
@@ -21,8 +21,8 @@ export class EquipmentService {
   constructor(
     @InjectRepository(Equipment)
     private equipmentRepository: Repository<Equipment>,
-    @InjectRepository(Category)
-    private categoryRepository: Repository<Category>,
+    @InjectRepository(SubCategory)
+    private subCategoryRepository: Repository<SubCategory>,
     private fileUploadService: FileUploadService,
   ) {}
 
@@ -30,17 +30,17 @@ export class EquipmentService {
     createEquipmentDto: CreateEquipmentDto,
     currentUser: User,
   ): Promise<Equipment> {
-    // Check if category exists
-    const category = await this.categoryRepository.findOne({
-      where: { id: createEquipmentDto.category_id },
+    // Check if subCategory exists
+    const subCategory = await this.subCategoryRepository.findOne({
+      where: { id: createEquipmentDto.subCategoryId },
     });
 
-    if (!category) {
+    if (!subCategory) {
       this.logger.error(
-        `Category with ID ${createEquipmentDto.category_id} not found`,
+        `SubCategory with ID ${createEquipmentDto.subCategoryId} not found`,
       );
       throw new NotFoundException(
-        `Category with ID ${createEquipmentDto.category_id} not found`,
+        `SubCategory with ID ${createEquipmentDto.subCategoryId} not found`,
       );
     }
 
@@ -75,12 +75,6 @@ export class EquipmentService {
     equipment.images = imagePaths; // Set the processed image paths
     const savedEquipment = await this.equipmentRepository.save(equipment);
 
-    // Update the category's equipment array
-    if (!category.equipment.includes(savedEquipment.id)) {
-      category.equipment.push(savedEquipment.id);
-      await this.categoryRepository.save(category);
-    }
-
     this.logger.log(
       `Equipment ${savedEquipment.name} with ID ${savedEquipment.id} created by user: ${currentUser.email}`,
     );
@@ -89,14 +83,14 @@ export class EquipmentService {
 
   async findAll(): Promise<Equipment[]> {
     return await this.equipmentRepository.find({
-      relations: ['category', 'ownerUser'],
+      relations: ['subCategory', 'ownerUser'],
     });
   }
 
   async findOne(id: string): Promise<Equipment> {
     const equipment = await this.equipmentRepository.findOne({
       where: { id },
-      relations: ['category', 'ownerUser'],
+      relations: ['subCategory', 'ownerUser'],
     });
 
     if (!equipment) {
@@ -107,17 +101,17 @@ export class EquipmentService {
     return equipment;
   }
 
-  async findByCategory(categoryId: string): Promise<Equipment[]> {
+  async findBySubCategory(subCategoryId: string): Promise<Equipment[]> {
     return await this.equipmentRepository.find({
-      where: { category_id: categoryId },
-      relations: ['category', 'ownerUser'],
+      where: { subCategoryId },
+      relations: ['subCategory', 'ownerUser'],
     });
   }
 
   async findByOwner(ownerId: string): Promise<Equipment[]> {
     return await this.equipmentRepository.find({
       where: { owner: ownerId },
-      relations: ['category', 'ownerUser'],
+      relations: ['subCategory', 'ownerUser'],
     });
   }
 
@@ -170,33 +164,25 @@ export class EquipmentService {
       }
     }
 
-    // If category is being changed, update the old and new category equipment arrays
+    // If subCategory is being changed, verify the new subCategory exists
     if (
-      updateEquipmentDto.category_id &&
-      updateEquipmentDto.category_id !== equipment.category_id
+      updateEquipmentDto.subCategoryId &&
+      updateEquipmentDto.subCategoryId !== equipment.subCategoryId
     ) {
-      // Remove from old category
-      const oldCategory = await this.categoryRepository.findOne({
-        where: { id: equipment.category_id },
+      const newSubCategory = await this.subCategoryRepository.findOne({
+        where: { id: updateEquipmentDto.subCategoryId },
       });
-      if (oldCategory) {
-        oldCategory.equipment = oldCategory.equipment.filter(
-          (eqId) => eqId !== id,
+      if (!newSubCategory) {
+        this.logger.error(
+          `SubCategory with ID ${updateEquipmentDto.subCategoryId} not found`,
         );
-        await this.categoryRepository.save(oldCategory);
-      }
-
-      // Add to new category
-      const newCategory = await this.categoryRepository.findOne({
-        where: { id: updateEquipmentDto.category_id },
-      });
-      if (newCategory && !newCategory.equipment.includes(id)) {
-        newCategory.equipment.push(id);
-        await this.categoryRepository.save(newCategory);
-        this.logger.log(
-          `Equipment ${equipment.name} moved from category ${equipment.category.name} to category ${newCategory.name} by user: ${currentUser.email}`,
+        throw new NotFoundException(
+          `SubCategory with ID ${updateEquipmentDto.subCategoryId} not found`,
         );
       }
+      this.logger.log(
+        `Equipment ${equipment.name} moved from subCategory ${equipment.subCategory.type} to subCategory ${newSubCategory.type} by user: ${currentUser.email}`,
+      );
     }
 
     // Remove the base64 images from the data to be saved
@@ -245,15 +231,6 @@ export class EquipmentService {
           );
         }
       }
-    }
-
-    // Remove from category's equipment array
-    const category = await this.categoryRepository.findOne({
-      where: { id: equipment.category_id },
-    });
-    if (category) {
-      category.equipment = category.equipment.filter((eqId) => eqId !== id);
-      await this.categoryRepository.save(category);
     }
 
     await this.equipmentRepository.remove(equipment);

@@ -21,9 +21,9 @@ export class EquipmentResponseDto {
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'The ID of the category this equipment belongs to',
+    description: 'The ID of the subCategory this equipment belongs to',
   })
-  category_id: string;
+  subCategoryId: string;
 
   @ApiProperty({
     example: [
@@ -44,7 +44,7 @@ export class EquipmentResponseDto {
     example: 150.0,
     description: 'The price per day for renting this equipment',
   })
-  price_per_day: number;
+  pricePerDay: number;
 
   @ApiProperty({
     example: true,
@@ -56,7 +56,7 @@ export class EquipmentResponseDto {
     example: 'New York, NY',
     description: 'The location where the equipment is available',
   })
-  location_id: string;
+  locationId: string;
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -68,11 +68,11 @@ export class EquipmentResponseDto {
     example: '2024-01-15T10:30:00.000Z',
     description: 'The creation timestamp',
   })
-  created_at: Date;
+  createdAt: Date;
 
   @ApiProperty({
     example: '2024-01-15T10:30:00.000Z',
     description: 'The last update timestamp',
   })
-  updated_at: Date;
+  updatedAt: Date;
 }
