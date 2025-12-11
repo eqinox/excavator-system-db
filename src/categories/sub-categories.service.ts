@@ -42,11 +42,8 @@ export class SubCategoriesService {
       );
     }
 
-    // Handle base64 image if provided
-    let imageObj: { original: string; small: string } | undefined;
-    if (createSubCategoryDto.image) {
-      imageObj = await this.handleBase64Image(createSubCategoryDto.image);
-    }
+    // Handle base64 image (required)
+    const imageObj = await this.handleBase64Image(createSubCategoryDto.image);
 
     // Set the creatorId field to the current user's ID
     const subCategoryData = {
@@ -59,10 +56,8 @@ export class SubCategoriesService {
 
     const subCategory = this.subCategoriesRepository.create(subCategoryData);
 
-    // Set the processed image paths if image was uploaded
-    if (imageObj) {
-      subCategory.image = imageObj;
-    }
+    // Set the processed image paths
+    subCategory.image = imageObj;
 
     const savedSubCategory =
       await this.subCategoriesRepository.save(subCategory);
@@ -215,6 +210,3 @@ export class SubCategoriesService {
     }
   }
 }
-
-
-

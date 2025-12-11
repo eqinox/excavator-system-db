@@ -12,6 +12,7 @@ import { FileUploadService } from '../common/services/file-upload.service';
 import { Category } from './category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { SubCategory } from './sub-category.entity';
 
 @Injectable()
 export class CategoriesService {
@@ -19,6 +20,8 @@ export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private categoriesRepository: Repository<Category>,
+    @InjectRepository(SubCategory)
+    private subCategoriesRepository: Repository<SubCategory>,
     private fileUploadService: FileUploadService,
   ) {}
 
@@ -141,12 +144,21 @@ export class CategoriesService {
   async remove(id: string, currentUser: User): Promise<void> {
     const category = await this.findOne(id);
 
+    // Check if category has associated sub categories
+    if (category.subCategories && category.subCategories.length > 0) {
+      this.logger.error(
+        `Cannot delete category ${category.name} because it has ${category.subCategories.length} associated sub category(ies)`,
+      );
+      throw new BadRequestException(
+        'Cannot delete category that has associated sub categories. Please delete all sub categories first.',
+      );
+    }
+
     // Delete associated image if exists
     if (category.image) {
       await this.fileUploadService.deleteImagePair(category.image.original);
     }
 
-    // SubCategories will be cascade deleted due to onDelete: 'CASCADE' in the relation
     await this.categoriesRepository.remove(category);
     this.logger.log(
       `Category ${category.name} deleted by user: ${currentUser.email}`,
