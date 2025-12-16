@@ -1,4 +1,5 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -6,6 +7,7 @@ import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { DelayInterceptor } from './delay.interceptor';
 import { TransformInterceptor } from './transform.interceptor';
 
 async function bootstrap() {
@@ -61,6 +63,9 @@ async function bootstrap() {
       disableErrorMessages: false,
     }),
   );
+  // Register delay interceptor first (if enabled, adds delay before processing)
+  const configService = app.get(ConfigService);
+  app.useGlobalInterceptors(new DelayInterceptor(configService));
   app.useGlobalInterceptors(new TransformInterceptor());
   // app.useGlobalInterceptors(new ResponseInterceptor());
 

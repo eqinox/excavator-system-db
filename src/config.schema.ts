@@ -23,4 +23,7 @@ export const configValidationSchema = Joi.object({
   CLOUD_ACCESS_KEY_ID: Joi.string().optional(),
   CLOUD_SECRET_ACCESS_KEY: Joi.string().optional(),
   CLOUD_BASE_URL: Joi.string().uri().optional(),
+  // Request delay configuration for frontend testing
+  ENABLE_REQUEST_DELAY: Joi.boolean().default(false).optional(),
+  REQUEST_DELAY_MS: Joi.number().default(2000).optional(),
 });
