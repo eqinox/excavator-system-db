@@ -68,9 +68,7 @@ export class CategoriesService {
   }
 
   async findAll(): Promise<Category[]> {
-    return await this.categoriesRepository.find({
-      relations: ['subCategories', 'creator'],
-    });
+    return await this.categoriesRepository.find();
   }
 
   async findOne(id: string): Promise<Category> {
