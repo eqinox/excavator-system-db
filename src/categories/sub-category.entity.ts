@@ -44,14 +44,38 @@ export class SubCategory {
     example: 0,
     description: 'The minimum range value',
   })
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | number) => {
+        if (value === null || value === undefined) return value;
+        const num = typeof value === 'string' ? parseFloat(value) : value;
+        // If it's a whole number, return as integer, otherwise return as float
+        return Number.isInteger(num) ? Math.round(num) : num;
+      },
+    },
+  })
   minRange: number;
 
   @ApiProperty({
     example: 10,
     description: 'The maximum range value',
   })
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | number) => {
+        if (value === null || value === undefined) return value;
+        const num = typeof value === 'string' ? parseFloat(value) : value;
+        // If it's a whole number, return as integer, otherwise return as float
+        return Number.isInteger(num) ? Math.round(num) : num;
+      },
+    },
+  })
   maxRange: number;
 
   @ApiProperty({
