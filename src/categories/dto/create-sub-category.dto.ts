@@ -44,3 +44,6 @@ export class CreateSubCategoryDto {
   @IsString()
   image: string;
 }
+
+
+
