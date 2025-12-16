@@ -445,6 +445,22 @@ export class SubCategoriesController {
     description: 'SubCategory not found',
   })
   @ApiResponse({
+    status: 400,
+    description:
+      'Bad Request - Cannot delete subCategory that has associated equipment',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example:
+            'Cannot delete subCategory that has associated equipment. Please delete or reassign all equipment first.',
+        },
+        statusCode: { type: 'number', example: 400 },
+      },
+    },
+  })
+  @ApiResponse({
     status: 403,
     description: 'Forbidden - Admin role required',
   })

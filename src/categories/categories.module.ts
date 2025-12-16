@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { User } from '../auth/user.entity';
 import { FileUploadService } from '../common/services/file-upload.service';
+import { Equipment } from '../equipment/equipment.entity';
 import {
   CategoriesController,
   SubCategoriesController,
@@ -14,7 +15,7 @@ import { SubCategory } from './sub-category.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Category, SubCategory, User]),
+    TypeOrmModule.forFeature([Category, SubCategory, User, Equipment]),
     AuthModule,
   ],
   controllers: [CategoriesController, SubCategoriesController],

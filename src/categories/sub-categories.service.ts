@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/user.entity';
 import { FileUploadService } from '../common/services/file-upload.service';
+import { Equipment } from '../equipment/equipment.entity';
 import { Category } from './category.entity';
 import { CreateSubCategoryDto } from './dto/create-sub-category.dto';
 import { UpdateSubCategoryDto } from './dto/update-sub-category.dto';
@@ -21,6 +22,8 @@ export class SubCategoriesService {
     private subCategoriesRepository: Repository<SubCategory>,
     @InjectRepository(Category)
     private categoriesRepository: Repository<Category>,
+    @InjectRepository(Equipment)
+    private equipmentRepository: Repository<Equipment>,
     private fileUploadService: FileUploadService,
   ) {}
 
@@ -156,6 +159,20 @@ export class SubCategoriesService {
   async remove(id: string, currentUser: User): Promise<void> {
     const subCategory = await this.findOne(id);
 
+    // Check if subcategory has associated equipment
+    const equipmentCount = await this.equipmentRepository.count({
+      where: { subCategoryId: subCategory.id },
+    });
+
+    if (equipmentCount > 0) {
+      this.logger.error(
+        `Cannot delete subCategory ${subCategory.type} because it has ${equipmentCount} associated equipment item(s)`,
+      );
+      throw new BadRequestException(
+        'Cannot delete subCategory that has associated equipment. Please delete or reassign all equipment first.',
+      );
+    }
+
     // Delete associated image if exists
     if (subCategory.image) {
       await this.fileUploadService.deleteImagePair(subCategory.image.original);
@@ -210,6 +227,3 @@ export class SubCategoriesService {
     }
   }
 }
-
-
-
