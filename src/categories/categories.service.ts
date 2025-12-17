@@ -74,7 +74,6 @@ export class CategoriesService {
   async findOne(id: string): Promise<Category> {
     const category = await this.categoriesRepository.findOne({
       where: { id },
-      relations: ['subCategories', 'creator'],
     });
 
     if (!category) {
