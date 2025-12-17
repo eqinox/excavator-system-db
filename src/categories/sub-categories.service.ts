@@ -67,25 +67,31 @@ export class SubCategoriesService {
     this.logger.log(
       `SubCategory ${savedSubCategory.type} created by user: ${currentUser.email}`,
     );
-    return savedSubCategory;
+    // Reload without creator relation to ensure it's not included in response
+    const subCategoryWithoutCreator =
+      await this.subCategoriesRepository.findOne({
+        where: { id: savedSubCategory.id },
+        relations: ['category'],
+      });
+    return subCategoryWithoutCreator!;
   }
 
   async findAll(categoryId?: string): Promise<SubCategory[]> {
     if (categoryId) {
       return await this.subCategoriesRepository.find({
         where: { categoryId },
-        relations: ['category', 'creator'],
+        relations: ['category'],
       });
     }
     return await this.subCategoriesRepository.find({
-      relations: ['category', 'creator'],
+      relations: ['category'],
     });
   }
 
   async findOne(id: string): Promise<SubCategory> {
     const subCategory = await this.subCategoriesRepository.findOne({
       where: { id },
-      relations: ['category', 'creator'],
+      relations: ['category'],
     });
 
     if (!subCategory) {
@@ -153,7 +159,13 @@ export class SubCategoriesService {
     this.logger.log(
       `SubCategory ${updatedSubCategory.type} updated by user: ${currentUser.email}`,
     );
-    return updatedSubCategory;
+    // Reload without creator relation to ensure it's not included in response
+    const subCategoryWithoutCreator =
+      await this.subCategoriesRepository.findOne({
+        where: { id: updatedSubCategory.id },
+        relations: ['category'],
+      });
+    return subCategoryWithoutCreator!;
   }
 
   async remove(id: string, currentUser: User): Promise<void> {
@@ -227,5 +239,3 @@ export class SubCategoriesService {
     }
   }
 }
-
-
