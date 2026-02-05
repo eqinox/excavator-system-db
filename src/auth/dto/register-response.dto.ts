@@ -39,4 +39,10 @@ export class RegisterResponseDto {
     description: 'The date when the user was last updated',
   })
   updated_at: Date;
+
+  @ApiProperty({
+    example: [],
+    description: 'List of equipment IDs ordered by the user',
+  })
+  orderedEquipmentIds: string[];
 }

@@ -20,6 +20,15 @@ export class UserResponseDto {
     enum: Role,
   })
   role: Role;
+
+  @ApiProperty({
+    example: [
+      '123e4567-e89b-12d3-a456-426614174000',
+      '123e4567-e89b-12d3-a456-426614174001',
+    ],
+    description: 'List of equipment IDs ordered by the user',
+  })
+  orderedEquipmentIds: string[];
 }
 
 export class LoginResponseDto {

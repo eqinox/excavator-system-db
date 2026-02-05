@@ -46,7 +46,10 @@ export class AuthService {
 
       // Remove password from the returned user object
       const { password: _, ...userWithoutPassword } = savedUser;
-      return userWithoutPassword;
+      return {
+        ...userWithoutPassword,
+        orderedEquipmentIds: [],
+      };
     } catch (error) {
       if (error.code === '23505') {
         throw new ConflictException('Username already exists');
@@ -66,6 +69,7 @@ export class AuthService {
       where: {
         email,
       },
+      relations: ['orderedEquipments'],
     });
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -84,11 +88,7 @@ export class AuthService {
 
       return {
         access_token: tokens.access_token,
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-        },
+        user: this.mapUserResponse(user),
       };
     } else {
       throw new UnauthorizedException('Please check your login credentials');
@@ -131,8 +131,20 @@ export class AuthService {
     res: Response,
   ): Promise<{
     access_token: string;
-    user: { id: string; email: string; role: Role };
+    user: {
+      id: string;
+      email: string;
+      role: Role;
+      orderedEquipmentIds: string[];
+    };
   }> {
+    const userWithOrders = await this.usersRepository.findOne({
+      where: { id: user.id },
+      relations: ['orderedEquipments'],
+    });
+    if (!userWithOrders) {
+      throw new UnauthorizedException('User not found');
+    }
     const tokens = await this.generateTokens(user);
     await this.updateRefreshToken(user.id, tokens.refresh_token);
 
@@ -146,11 +158,7 @@ export class AuthService {
 
     return {
       access_token: tokens.access_token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
+      user: this.mapUserResponse(userWithOrders),
     };
   }
 
@@ -198,5 +206,20 @@ export class AuthService {
       this.logger.warn(`Token validation failed: ${error.message}`);
       return { valid: false };
     }
+  }
+
+  private mapUserResponse(user: User): {
+    id: string;
+    email: string;
+    role: Role;
+    orderedEquipmentIds: string[];
+  } {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      orderedEquipmentIds:
+        user.orderedEquipments?.map((ordered) => ordered.equipmentId) ?? [],
+    };
   }
 }

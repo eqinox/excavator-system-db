@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Equipment } from '../equipment/equipment.entity';
+import { OrderedEquipment } from '../ordered-equipment/ordered-equipment.entity';
 import { Role } from './roles.enum';
 
 @Entity()
@@ -10,14 +11,14 @@ export class User {
     description: 'The unique identifier of the user',
   })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ApiProperty({
     example: 'user@example.com',
     description: 'The email of the user',
   })
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @ApiProperty({
     example: 'johndoe',
@@ -25,35 +26,41 @@ export class User {
     nullable: true,
   })
   @Column({ nullable: true })
-  username: string;
+  username!: string;
 
   @ApiProperty({
     example: 'hashedPassword123',
     description: 'The hashed password of the user',
   })
   @Column()
-  password: string;
+  password!: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
+  created_at!: Date;
 
   @Column({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  updated_at: Date;
+  updated_at!: Date;
 
   @Column({
     type: 'enum',
     enum: Role,
     default: Role.USER,
   })
-  role: Role;
+  role!: Role;
 
   @Column({ type: 'varchar', nullable: true })
-  refresh_token: string | null;
+  refresh_token?: string | null;
 
   @OneToMany(() => Equipment, (equipment) => equipment.ownerUser)
-  ownedEquipment: Equipment[];
+  ownedEquipment?: Equipment[];
+
+  @OneToMany(
+    () => OrderedEquipment,
+    (orderedEquipment) => orderedEquipment.user,
+  )
+  orderedEquipments?: OrderedEquipment[];
 }

@@ -59,20 +59,3 @@ export class SubCategoryResponseDto {
   })
   updatedAt: Date;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

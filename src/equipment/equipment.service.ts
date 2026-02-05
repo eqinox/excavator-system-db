@@ -83,14 +83,14 @@ export class EquipmentService {
 
   async findAll(): Promise<Equipment[]> {
     return await this.equipmentRepository.find({
-      relations: ['subCategory', 'ownerUser'],
+      relations: ['subCategory', 'ownerUser', 'orderedEquipment'],
     });
   }
 
   async findOne(id: string): Promise<Equipment> {
     const equipment = await this.equipmentRepository.findOne({
       where: { id },
-      relations: ['subCategory', 'ownerUser'],
+      relations: ['subCategory', 'ownerUser', 'orderedEquipment'],
     });
 
     if (!equipment) {
@@ -104,14 +104,14 @@ export class EquipmentService {
   async findBySubCategory(subCategoryId: string): Promise<Equipment[]> {
     return await this.equipmentRepository.find({
       where: { subCategoryId },
-      relations: ['subCategory', 'ownerUser'],
+      relations: ['subCategory', 'ownerUser', 'orderedEquipment'],
     });
   }
 
   async findByOwner(ownerId: string): Promise<Equipment[]> {
     return await this.equipmentRepository.find({
       where: { owner: ownerId },
-      relations: ['subCategory', 'ownerUser'],
+      relations: ['subCategory', 'ownerUser', 'orderedEquipment'],
     });
   }
 

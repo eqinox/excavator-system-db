@@ -5,11 +5,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../auth/user.entity';
 import { SubCategory } from '../categories/sub-category.entity';
+import { OrderedEquipment } from '../ordered-equipment/ordered-equipment.entity';
 
 @Entity()
 export class Equipment {
@@ -92,6 +94,12 @@ export class Equipment {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'owner' })
   ownerUser: User;
+
+  @OneToOne(
+    () => OrderedEquipment,
+    (orderedEquipment) => orderedEquipment.equipment,
+  )
+  orderedEquipment: OrderedEquipment;
 
   @CreateDateColumn()
   createdAt: Date;

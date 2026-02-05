@@ -9,6 +9,8 @@ import { configValidationSchema } from './config.schema';
 import { Equipment } from './equipment/equipment.entity';
 import { EquipmentModule } from './equipment/equipment.module';
 import { ImagesModule } from './images/images.module';
+import { OrderedEquipment } from './ordered-equipment/ordered-equipment.entity';
+import { OrderedEquipmentModule } from './ordered-equipment/ordered-equipment.module';
 
 @Module({
   imports: [
@@ -30,7 +32,7 @@ import { ImagesModule } from './images/images.module';
           username: configService.get('DB_USERNAME'),
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_DATABASE'),
-          entities: [User, Category, Equipment],
+          entities: [User, Category, Equipment, OrderedEquipment],
         };
       },
     }),
@@ -38,6 +40,7 @@ import { ImagesModule } from './images/images.module';
     CategoriesModule,
     EquipmentModule,
     ImagesModule,
+    OrderedEquipmentModule,
   ],
 })
 export class AppModule {}

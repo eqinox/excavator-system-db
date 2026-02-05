@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OrderedEquipmentSummaryDto } from '../../ordered-equipment/dto/ordered-equipment-summary.dto';
 
 export class EquipmentResponseDto {
   @ApiProperty({
@@ -63,6 +64,12 @@ export class EquipmentResponseDto {
     description: 'The ID of the user who owns this equipment',
   })
   owner: string;
+
+  @ApiPropertyOptional({
+    type: OrderedEquipmentSummaryDto,
+    description: 'Ordered equipment details if assigned to a user',
+  })
+  orderedEquipment?: OrderedEquipmentSummaryDto;
 
   @ApiProperty({
     example: '2024-01-15T10:30:00.000Z',
