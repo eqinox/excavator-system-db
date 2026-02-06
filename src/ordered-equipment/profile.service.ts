@@ -11,8 +11,8 @@ import { Equipment } from '../equipment/equipment.entity';
 import { OrderedEquipment } from './ordered-equipment.entity';
 
 @Injectable()
-export class OrderedEquipmentService {
-  private logger = new Logger('OrderedEquipmentService', { timestamp: true });
+export class ProfileService {
+  private logger = new Logger('ProfileService', { timestamp: true });
 
   constructor(
     @InjectRepository(OrderedEquipment)
@@ -70,9 +70,7 @@ export class OrderedEquipmentService {
     );
   }
 
-  async listOrderedEquipment(
-    currentUser: User,
-  ): Promise<OrderedEquipment[]> {
+  async listOrderedEquipment(currentUser: User): Promise<OrderedEquipment[]> {
     return this.orderedEquipmentRepository.find({
       where: { userId: currentUser.id },
       relations: ['equipment'],

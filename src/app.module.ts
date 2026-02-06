@@ -10,7 +10,7 @@ import { Equipment } from './equipment/equipment.entity';
 import { EquipmentModule } from './equipment/equipment.module';
 import { ImagesModule } from './images/images.module';
 import { OrderedEquipment } from './ordered-equipment/ordered-equipment.entity';
-import { OrderedEquipmentModule } from './ordered-equipment/ordered-equipment.module';
+import { ProfileModule } from './ordered-equipment/profile.module';
 
 @Module({
   imports: [
@@ -40,7 +40,7 @@ import { OrderedEquipmentModule } from './ordered-equipment/ordered-equipment.mo
     CategoriesModule,
     EquipmentModule,
     ImagesModule,
-    OrderedEquipmentModule,
+    ProfileModule,
   ],
 })
 export class AppModule {}

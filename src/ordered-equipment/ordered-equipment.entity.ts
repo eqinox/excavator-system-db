@@ -17,31 +17,31 @@ export class OrderedEquipment {
     description: 'The unique identifier of the ordered equipment record',
   })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'The ID of the user who ordered the equipment',
   })
   @Column()
-  userId: string;
+  userId!: string;
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'The ID of the ordered equipment',
   })
   @Column({ unique: true })
-  equipmentId: string;
+  equipmentId!: string;
 
   @ManyToOne(() => User, (user) => user.orderedEquipments, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @OneToOne(() => Equipment, (equipment) => equipment.orderedEquipment, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'equipmentId' })
-  equipment: Equipment;
+  equipment!: Equipment;
 }

@@ -20,19 +20,17 @@ import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/user.entity';
 import { AddOrderedEquipmentDto } from './dto/add-ordered-equipment.dto';
 import { OrderedEquipmentResponseDto } from './dto/ordered-equipment-response.dto';
-import { OrderedEquipmentService } from './ordered-equipment.service';
+import { ProfileService } from './profile.service';
 
-@ApiTags('ordered-equipment')
-@Controller('person')
+@ApiTags('profile')
+@Controller('profile')
 @UseGuards(AuthGuard())
 @ApiResponse({
   status: 401,
   description: 'Unauthorized',
 })
-export class OrderedEquipmentController {
-  constructor(
-    private readonly orderedEquipmentService: OrderedEquipmentService,
-  ) {}
+export class ProfileController {
+  constructor(private readonly profileService: ProfileService) {}
 
   @Post('ordered-equipments')
   @ApiBearerAuth()
@@ -54,7 +52,7 @@ export class OrderedEquipmentController {
     @Body() addOrderedEquipmentDto: AddOrderedEquipmentDto,
     @GetUser() currentUser: User,
   ): Promise<OrderedEquipmentResponseDto> {
-    return await this.orderedEquipmentService.addOrderedEquipment(
+    return await this.profileService.addOrderedEquipment(
       addOrderedEquipmentDto.equipmentId,
       currentUser,
     );
@@ -74,9 +72,7 @@ export class OrderedEquipmentController {
   async listOrderedEquipment(
     @GetUser() currentUser: User,
   ): Promise<OrderedEquipmentResponseDto[]> {
-    return await this.orderedEquipmentService.listOrderedEquipment(
-      currentUser,
-    );
+    return await this.profileService.listOrderedEquipment(currentUser);
   }
 
   @Delete('ordered-equipments/:equipmentId')
@@ -107,7 +103,7 @@ export class OrderedEquipmentController {
     @Param('equipmentId') equipmentId: string,
     @GetUser() currentUser: User,
   ): Promise<{ message: string }> {
-    return await this.orderedEquipmentService.removeOrderedEquipment(
+    return await this.profileService.removeOrderedEquipment(
       equipmentId,
       currentUser,
     );
